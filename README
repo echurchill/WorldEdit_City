@@ -1,0 +1,88 @@
+/*
+* City generator CraftScript for WorldEdit
+* (parts of this is based on WorldEdit's sample Maze generator)
+* Copyright (C) 2011 echurch <http://www.virtualchurchill.com>
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+* Issues (search for !BUG!)
+If you get a timeout error when running this script, open 
+   "plugins/worldedit/config.yml" and change "timeout" 
+   value (should be under "Scripting") to 10000 or larger
+Basement doors don't "place" correctly
+Manhole ladders don't "place" correctly
+Need to have the height of the block based on the legal height allowed
+  by Minecraft given the player's location
+
+* Potential Upcoming Improvements
+phase 1
+arg options for park, town (short) and city (tall)
+place manholes and steps for parks
+place manholes for plumbing
+add street lines
+add trees to parks
+remove all doors and ladders for now
+
+phase 2
+add arg options for lots
+figure out doors and ladders (add them to buildings, stairs and access manholes)
+add parking lots and parking spaces
+add parking garage under 2x2 or larger
+improve fountian (rounder and scale it up if the park is bigger, maybe)
+add "government" buildings with lots of columns
+
+phase 3
+add arg option for neighborhood, ponds and canals
+layout houses 4 lots to a city square
+  house should centered in fenced lot
+  single story with more colors
+  they should have driveways and garages
+reduce the width/depth of the the building floors has they get taller
+regular (and existing random) windows in buildings
+add parks with ponds (nearly filling them)
+canals on the N, S, E or W sides (or combinations of the four)
+
+* Ponder
+Interior room generator? 
+Is there a way to speed up the transcription pass?
+
+* Fixed
+Wooden floors with accent only in walls
+Underground water reservoir beneath parks
+Parks
+Skylights on roofs
+Support 3x3, 3x2, 2x3, 3x1, 1x3, 2x2, 2x1 and 1x2 buildings
+Pyramid, needle or tented roofs for buildings
+Simple park with fountain
+Stairwells in basement 
+Add guardrails to stairs
+Thicker streets (allows for roadlines and manholes)
+Need to lower the ratio of gold/diamonds in the sewer and plumbing levels
+Get rid of the "make a region first" requirement
+Sewer treasure encroaches onto the plumbing level
+Need to narrow the sidewalks 
+Add sandstone accent for wood structures 
+Stairs (down into the basement, up to roof) 
+Streetlights 
+Manholes w/ladders down to the sewer (be the "focal" point)
+
+* Answered
+How do I increase the duration of script execution? - plugins/worldedit/config.yml
+Should there be support for smaller blocks 2x2 instead of 3x3? - NO
+
+* Left to player(s)
+Plumbing level isn't bounded at the city edge 
+Air bridges between buildings? 
+Should replace outer most sidewalk with grass 
+*/
