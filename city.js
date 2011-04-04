@@ -106,7 +106,7 @@ var floorHeight = 4;
 var roofHeight = 1;
 var belowGround = plumbingHeight + sewerHeight + streetHeight - 1;
 var cityFloorCount = 10;
-var townFloorCount = 5;
+var townFloorCount = 3;
 var createMode = {"city" : 0, "town" : 1, "park" : 2, "emptylot" : 3, "parkinglot" : 4};
 var modeCreate = createMode.city;
 
@@ -128,15 +128,6 @@ else
 var floorCount = modeCreate == createMode.city ? cityFloorCount : townFloorCount; // short or tall
 var squaresWidth = 5;
 var squaresLength = 5;
-//var floorCount = argv.length > 2 ? parseInt(argv[1]) : 
-//                 (modeCreate == createMode.city ? cityFloorCount : townFloorCount); // short or tall
-//var squaresWidth = argv.length > 3 ? parseInt(argv[1]) : 5;
-//var squaresLength = argv.length > 4 ? parseInt(argv[2]) : 5;
-//
-// range checking
-//floorCount = floorCount < 1 ? 1 : floorCount;
-//squaresWidth = squaresWidth < 5 ? 5 : squaresWidth;
-//squaresLength = squaresLength < 5 ? 5 : squaresLength;
 
 // making room to create
 var arrayWidth = squaresWidth * squareBlocks;
@@ -193,7 +184,7 @@ function DecodeData(block) {
 }
 
 function InitializeBlocks() {
-    context.print(arrayWidth + " " + arrayHeight + " " + arrayDepth);
+    //context.print(arrayWidth + " " + arrayHeight + " " + arrayDepth);
     context.print("Initializing");
     for (var x = 0; x < arrayWidth; x++) {
         blocks[x] = new Array(arrayHeight);
@@ -291,8 +282,6 @@ function AddPlumbingLevel() {
         }
     }
 	
-	context.print("1");
-
     // add some strata
     FillStrataLevel(BlockID.OBSIDIAN, 0);
 
@@ -307,8 +296,6 @@ function AddPlumbingLevel() {
     var current = 0;
 
     stack.push(id(0, 0))
-
-	context.print("2");
 
     while (stack.length > 0) {
         var cell = stack.pop();
@@ -350,8 +337,6 @@ function AddPlumbingLevel() {
             }
         }
     }
-
-	context.print("3");
 
     for (var z = 0; z < d; z++) {
         for (var x = 0; x < w; x++) {
@@ -397,8 +382,6 @@ function AddPlumbingLevel() {
             }
         }
     }
-
-	context.print("4");
 
     // top off the plumbing
     FillStrataLevel(BlockID.CLAY, 3);
@@ -810,8 +793,6 @@ function AddCitySquares() {
     }
 
     function DrawBuildingOrParkCell(cellX, cellZ, cellW, cellL) {
-		context.print(cellX + " " + cellZ);
-		
         // little park instead of a building?
         if (RandomInt(4) == 0 && !parkCreated) {
             DrawParkCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL)
@@ -823,8 +804,6 @@ function AddCitySquares() {
             DrawBuildingCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL);
     }
 
-	context.print("1");
-	
     // create cells[3][3]
     var cells = new Array(3);
     for (var x = 0; x < 3; x++) {
@@ -833,8 +812,6 @@ function AddCitySquares() {
             cells[x][z] = false;
     }
 
-	context.print("2");
-
     // how big is the big building?
     var bigW, bigL;
     do {
@@ -842,20 +819,14 @@ function AddCitySquares() {
         bigL = RandomBuildingSize();
     } while (bigW == 1 && bigL == 1);
 
-	context.print("3");
-
     // where will it fit?
     var bigX = RandomInt(4 - bigW);
     var bigZ = RandomInt(4 - bigL);
-
-	context.print("4");
 
     // mark where it is
     for (var x = bigX; x < bigX + bigW; x++)
         for (var z = bigZ; z < bigZ + bigL; z++)
             cells[x][z] = true;
-
-	context.print("5");
 
     // finally actually place it there
     DrawBuildingOrParkCell(bigX + 1, bigZ + 1, bigW, bigL);
