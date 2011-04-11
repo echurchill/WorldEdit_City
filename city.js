@@ -18,53 +18,36 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 * Issues (search for !BUG!)
-If you get a timeout error when running this script, open 
-"plugins/worldedit/config.yml" and change "timeout" 
-value (should be under "Scripting") to 10000 or larger
-Basement doors don't "place" correctly
-Manhole ladders don't "place" correctly
-Need to have the height of the block based on the legal height allowed
-by Minecraft given the player's location
+If you get a timeout error when running this script, open "plugins/worldedit/config.yml" and change "timeout" value (should be under "Scripting") to 10000 or larger
+Need to figure out the height of the tallest legal block allowed by Minecraft given the player's location
 
 * Potential Upcoming Improvements
-phase 1
-place manholes for plumbing
 add street lines
-add trees to parks
-fix up phase to add trees (and eventually doors and ladders)
-record as things get created, then call tree creation after transcription
-FixupTree(blockX, blockY, blockZ, typeoftree)
-
-phase 2
-add args for parkinglots
 rework the building/park/etc. resize and placement logic
 add parking garage under 2x2 or larger
 improve fountain (rounder and scale it up if the park is bigger, maybe)
+add trees to parks (fix up phase to add trees) 
 add "government" buildings with lots of columns
-figure out doors and ladders (add them to buildings, stairs and access manholes)
-improve fixup phase to add setSmartBlock support
-FixupDoor(blockX, blockY, blockZ, orentation)
-FixupLadder(blockX, blockY, blockZ, orentation)
-
-phase 3
 add arg option for neighborhood, ponds and canals
-layout houses 4 lots to a city square
-house should centered in fenced lot
-single story with more colors
-they should have driveways and garages
+layout houses 4 lots to a city square. house should centered in fenced lot. single story with more colors. they should have driveways and garages
 add roof overhang and better colored roofs (colored wool)
 reduce the width/depth of the the building floors has they get taller
-better colored walls using wool (mind you now less fire proof)
+better colored walls using wool (mind you the building will be less fire proof)
 regular (and existing random) windows in buildings
 add parks with ponds (nearly filling them)
 canals on the N, S, E or W sides (or combinations of the four)
 
 * Ponder
-how do I exit this script if there is a request for help?
 Interior room generator? 
 Is there a way to speed up the transcription pass?
+Farm generator?
 
 * Fixed
+door and ladder fixup logic working
+place manholes for plumbing
+ladders down to reservoirs
+ladders down to sewers
+renamed emptylot to dirtlot
 Place manholes in parks
 Arg options for emptylots, parks, parkinglots, streets only, towns (short) and cities (tall)
 Add some lights to the reservoirs
@@ -97,15 +80,18 @@ Air bridges between buildings?
 Should replace outer most sidewalk with grass 
 */
 
+importPackage(Packages.java.io);
+importPackage(Packages.java.awt);
 importPackage(Packages.com.sk89q.worldedit);
 importPackage(Packages.com.sk89q.worldedit.blocks);
 importPackage(Packages.com.sk89q.worldedit.regions);
-importPackage(Packages.com.sk89q.worldedit.commands);
+importPackage(Packages.com.sk89q.worldedit.util);
 
 // for future reference
 var editsess = context.remember();
 var session = context.getSession();
 var origin = player.getBlockIn();
+var rand = new java.util.Random();
 
 // some pseudo-constants
 var squareBlocks = 15;
@@ -127,17 +113,17 @@ var cityFloorCount = 10;
 var townFloorCount = 3;
 
 // what do you want to create
-var helpString = "[HELP | CITY | TOWN | PARK | EMPTYLOT | PARKINGLOT | STREETS]"
+var helpString = "[HELP | CITY | TOWN | PARK | DIRTLOT | PARKINGLOT | JUSTSTEETS]"
 context.checkArgs(0, -1, helpString);
 var modeCreate;
-var createMode = { "city": 0, "town": 1, "park": 2, "dirtlot": 3, "parkinglot": 4, "emptylot": 5, "help": -1 };
+var createMode = { "city": 0, "town": 1, "park": 2, "dirtlot": 3, "parkinglot": 4, "juststreets": 5, "help": -1 };
 var modeArg = argv.length > 1 ? argv[1] : "CITY";
 
 // look for longest params first
 if (/PARKINGLOT/i.test(modeArg))
     modeCreate = createMode.parkinglot
-else if (/EMPTYLOT/i.test(modeArg))
-    modeCreate = createMode.emptylot;
+else if (/JUSTSTEETS/i.test(modeArg))
+    modeCreate = createMode.juststreets;
 else if (/DIRTLOT/i.test(modeArg))
     modeCreate = createMode.dirtlot
 else if (/CITY/i.test(modeArg))
@@ -148,74 +134,121 @@ else if (/PARK/i.test(modeArg))
     modeCreate = createMode.park
 
 // all else fails let's show some help
+else 
+    modeCreate = createMode.Help;
+
+// show help
+if (modeCreate == createMode.Help)
+    context.print("Usage: " + argv[0] + " " + helpString);
+
+// otherwise let's do something!
 else {
-    context.print("Usage: " + helpString);
-    // how do I exit the script?
+
+    // how big is everything?
+    var floorCount = modeCreate == createMode.city ? cityFloorCount : townFloorCount; // short or tall
+    var squaresWidth = 5;
+    var squaresLength = 5;
+
+    // extended BlockID types
+    var ExtendedID = {
+        "NORTHWARD_LADDER": EncodeBlock(BlockID.LADDER, 4),
+        "EASTWARD_LADDER": EncodeBlock(BlockID.LADDER, 2),
+        "SOUTHWARD_LADDER": EncodeBlock(BlockID.LADDER, 5),
+        "WESTWARD_LADDER": EncodeBlock(BlockID.LADDER, 3),
+
+        "NORTHFACING_WOODEN_DOOR": EncodeBlock(BlockID.WOODEN_DOOR, 0),
+        "EASTFACING_WOODEN_DOOR": EncodeBlock(BlockID.WOODEN_DOOR, 1),
+        "SOUTHFACING_WOODEN_DOOR": EncodeBlock(BlockID.WOODEN_DOOR, 2),
+        "WESTFACING_WOODEN_DOOR": EncodeBlock(BlockID.WOODEN_DOOR, 3),
+
+        "NORTHFACING_REVERSED_WOODEN_DOOR": EncodeBlock(BlockID.WOODEN_DOOR, 3 + 4),
+        "EASTFACING_REVERSED_WOODEN_DOOR": EncodeBlock(BlockID.WOODEN_DOOR, 0 + 4),
+        "SOUTHFACING_REVERSED_WOODEN_DOOR": EncodeBlock(BlockID.WOODEN_DOOR, 1 + 4),
+        "WESTFACING_REVERSED_WOODEN_DOOR": EncodeBlock(BlockID.WOODEN_DOOR, 2 + 4),
+
+        "WHITE_CLOTH": EncodeBlock(BlockID.CLOTH, 0),
+        "ORANGE_CLOTH": EncodeBlock(BlockID.CLOTH, 1),
+        "MAGENTA_CLOTH": EncodeBlock(BlockID.CLOTH, 2),
+        "LIGHT_BLUE_CLOTH": EncodeBlock(BlockID.CLOTH, 3),
+        "YELLOW_CLOTH": EncodeBlock(BlockID.CLOTH, 4),
+        "LIGHT_GREEN_CLOTH": EncodeBlock(BlockID.CLOTH, 5),
+        "PINK_CLOTH": EncodeBlock(BlockID.CLOTH, 6),
+        "GRAY_CLOTH": EncodeBlock(BlockID.CLOTH, 7),
+        "LIGHT_GRAY_CLOTH": EncodeBlock(BlockID.CLOTH, 8),
+        "CYAN_CLOTH": EncodeBlock(BlockID.CLOTH, 9),
+        "PURPLE_CLOTH": EncodeBlock(BlockID.CLOTH, 10),
+        "BLUE_CLOTH": EncodeBlock(BlockID.CLOTH, 11),
+        "BROWN_CLOTH": EncodeBlock(BlockID.CLOTH, 12),
+        "DARK_GREEN_CLOTH": EncodeBlock(BlockID.CLOTH, 13),
+        "RED_CLOTH": EncodeBlock(BlockID.CLOTH, 14),
+        "BLACK": EncodeBlock(BlockID.CLOTH, 15)
+    };
+
+    // making room to create
+    var arrayWidth = squaresWidth * squareBlocks;
+    var arrayDepth = squaresLength * squareBlocks;
+    var arrayHeight = belowGround + streetHeight + floorHeight * cityFloorCount + roofHeight;
+    var blocks = new Array(arrayWidth);
+    InitializeBlocks();
+
+    // make room for fixups and list out the known things we can fixup
+    var fixups = new Array();
+
+    // add plumbing level (based on Maze.js from WorldEdit)
+    AddPlumbingLevel();
+
+    // add streets
+    AddStreets();
+
+    // add the inside bits
+    switch (modeCreate) {
+        case createMode.city:
+        case createMode.town:
+            // add sewer, reservoirs, parks and buildings 
+            AddCitySquares();
+            break;
+        case createMode.park:
+            AddParkLot();
+            break;
+        case createMode.dirtlot:
+            AddDirtLot();
+            break;
+        case createMode.parkinglot:
+            AddParkingLot();
+            break;
+        default: // createMode.juststreets
+            AddJustStreets();
+            break;
+    }
+
+    // add access points (will modify the player offset correctly as well)
+    AddManholes();
+
+    // and we are nearly done
+    TranscribeBlocks(origin);
+
+    // finally fix the things that need to be fixed up
+    FixupFixups(origin);
+
+    // poof, we are done!
+    context.print("fini");
 }
-
-// how big is everything?
-var floorCount = modeCreate == createMode.city ? cityFloorCount : townFloorCount; // short or tall
-var squaresWidth = 5;
-var squaresLength = 5;
-
-// making room to create
-var arrayWidth = squaresWidth * squareBlocks;
-var arrayDepth = squaresLength * squareBlocks;
-var arrayHeight = belowGround + streetHeight + floorHeight * cityFloorCount + roofHeight;
-var blocks = new Array(arrayWidth);
-InitializeBlocks();
-
-// add plumbing level (based on Maze.js from WorldEdit)
-AddPlumbingLevel();
-
-// add streets
-AddStreets();
-
-// add the inside bits
-switch (modeCreate) {
-    case createMode.city:
-    case createMode.town:
-        // add sewer, reservoirs, parks and buildings 
-        AddCitySquares();
-        break;
-    case createMode.park:
-        AddParkLot();
-        break;
-    case createMode.dirtlot:
-        AddDirtLot();
-        break;
-    case createMode.parkinglot:
-        AddParkingLot();
-        break;
-    default: // createMode.steets
-        AddEmptyLot();
-        break;
-}
-
-// add access points (will modify the player offset as well)
-AddManholes();
-
-// and we are done
-TranscribeBlocks(origin);
-context.print("fini");
 
 ////////////////////////////////////////////////////
-// all the details
+// all the supporting bits
 ////////////////////////////////////////////////////
 
 function EncodeBlock(type, data) {
-    context.print(type + " " + data);
+    //context.print(type + " " + data);
     return (data << 8) | type;
 }
 
 function DecodeType(block) {
     return block & 0xFF;
-    //    return block - ((block >> 8) << 8);
 }
 
 function DecodeData(block) {
     return block >> 8;
-    //    return (block >> 8);
 }
 
 function InitializeBlocks() {
@@ -247,10 +280,6 @@ function TranscribeBlocks(origin) {
                 //editsess.smartSetBlock(new Vector(x, y - belowGround, z), new BaseBlock(blocks[x][y][z]));
                 //editsess.SetBlock(new Vector(x, y - belowGround, z), new BaseBlock(blocks[x][y][z]));
             }
-}
-
-function RandomInt(range) {
-    return Math.floor(Math.random() * range);
 }
 
 // need to standarize on one param style, these five are not consistent!
@@ -291,32 +320,50 @@ function FillStrataLevel(blockID, at) {
     FillLayer(blockID, 0, 0, at, arrayWidth, arrayDepth);
 }
 
-function AddPlumbingLevel() {
-    context.print("Plumbing");
+////////////////////////////////////////////////////
+// fix up logic
+////////////////////////////////////////////////////
 
-    function id(x, z) {
-        return z * (w + 1) + x;
-    }
+function FixupFixups(origin) {
+    for (i = 0; i < fixups.length; i++)
+        fixups[i].setBlock(origin);
+}
 
-    function $x(i) {
-        return i % (w + 1);
-    }
+function SetLateBlock(atX, atY, atZ, id) {
+    fixups.push(new LateItem(atX, atY, atZ, id));
+}
 
-    function $z(i) {
-        return Math.floor(i / (w + 1));
-    }
+function LateItem(atX, atY, atZ, id) {
+    this.blockId = id;
+    this.blockX = atX
+    this.blockY = atY
+    this.blockZ = atZ;
 
-    function shuffle(arr) {
-        var i = arr.length;
-        if (i == 0) return false;
-        while (--i) {
-            var j = RandomInt(i + 1);
-            var tempi = arr[i];
-            var tempj = arr[j];
-            arr[i] = tempj;
-            arr[j] = tempi;
+    this.setBlock = function (origin) {
+        var id = DecodeType(this.blockId);
+        var data = DecodeData(this.blockId);
+        //context.print(id + " " + data);
+
+        // late creation
+        editsess.smartSetBlock(origin.add(this.blockX, this.blockY, this.blockZ),
+                               new BaseBlock(id, data));
+
+        // fix up doors
+        if (id == BlockID.WOODEN_DOOR) {
+            //context.print(id + " " + (data + 8));
+            editsess.smartSetBlock(origin.add(this.blockX, this.blockY + 1, this.blockZ),
+                               new BaseBlock(id, data + 8));
         }
     }
+}
+
+////////////////////////////////////////////////////
+// specific city block construction
+////////////////////////////////////////////////////
+
+// borrowed from WorldEdit's Maze script
+function AddPlumbingLevel() {
+    context.print("Plumbing");
 
     // add some strata
     FillStrataLevel(BlockID.OBSIDIAN, 0);
@@ -389,7 +436,7 @@ function AddPlumbingLevel() {
             blocks[x * 2 + 1][1][z * 2 + 1] = BlockID.OBSIDIAN;
             blocks[x * 2 + 1][2][z * 2 + 1] = BlockID.OBSIDIAN;
 
-            switch (RandomInt(15)) {
+            switch (rand.nextInt(15)) {
                 case 0:
                 case 1:
                 case 2:
@@ -407,6 +454,8 @@ function AddPlumbingLevel() {
                 case 10: // 13.3%
                     blocks[x * 2][1][z * 2] = BlockID.RED_MUSHROOM;
                     break;
+
+                // what did people flush down the toilet? 
                 case 11: //  6.7%
                     blocks[x * 2][1][z * 2] = BlockID.GOLD_BLOCK;
                     break;
@@ -421,13 +470,37 @@ function AddPlumbingLevel() {
 
     // top off the plumbing
     FillStrataLevel(BlockID.CLAY, 3);
+
+    //======================================================
+    function id(x, z) {
+        return z * (w + 1) + x;
+    }
+
+    function $x(i) {
+        return i % (w + 1);
+    }
+
+    function $z(i) {
+        return Math.floor(i / (w + 1));
+    }
+
+    function shuffle(arr) {
+        var i = arr.length;
+        if (i == 0) return false;
+        while (--i) {
+            var j = rand.nextInt(i + 1);
+            var tempi = arr[i];
+            var tempj = arr[j];
+            arr[i] = tempj;
+            arr[j] = tempi;
+        }
+    }
 }
 
 function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     var cornerWidth = squareBlocks / 3;
     var cellWidth = cellW * squareBlocks;
     var cellLength = cellL * squareBlocks;
-    //var groundLevel = streetLevel;
 
     // reservoir's walls
     FillCellLayer(BlockID.SANDSTONE, blockX, blockZ, 0, cellW, cellL);
@@ -458,13 +531,16 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     FillCellLayer(BlockID.GRASS, blockX, blockZ, streetLevel + 1, cellW, cellL);
 
     // add an access point to the reservoir
-    blocks[blockX + 2][streetLevel + 1][blockZ + 1] = BlockID.AIR; // LOG;
+    blocks[blockX + 2][streetLevel + 1][blockZ + 1] = BlockID.LOG;
     blocks[blockX + 2][streetLevel    ][blockZ + 1] = BlockID.AIR;
     blocks[blockX + 3][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
     blocks[blockX + 2][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
     blocks[blockX + 1][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
 
-    // add ladders
+    // Record the need for the ladders
+    SetLateBlock(blockX + 2, streetLevel    , blockZ + 1, ExtendedID.WESTWARD_LADDER);
+    SetLateBlock(blockX + 2, streetLevel - 1, blockZ + 1, ExtendedID.WESTWARD_LADDER);
+    SetLateBlock(blockX + 2, streetLevel - 2, blockZ + 1, ExtendedID.WESTWARD_LADDER);
 
     // add some fencing
     var fenceHole = 2;
@@ -494,6 +570,13 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     blocks[fountainX + 2][streetLevel + 3][fountainZ + 2] = BlockID.GLASS;
     blocks[fountainX + 2][streetLevel + 4][fountainZ + 2] = BlockID.GLASS;
     blocks[fountainX + 2][streetLevel + 5][fountainZ + 2] = BlockID.WATER;
+
+    // add some trees
+//    for (var x = 2; x < cellWidth - 2; x++)
+//        for (var z = 2; z < cellLength - 2; z++)
+//            if (blocks[x][streetLevel + 1][z] == BlockID.GRASS && rand.nextInt(2) > 0)
+//                FixupTree(x, streetLevel + 2, z);
+//    PushTree(5, streetLevel + 1, 5);
 }
 
 function AddCitySquares() {
@@ -519,8 +602,8 @@ function AddCitySquares() {
     } while (bigW == 1 && bigL == 1);
 
     // where will it fit?
-    bigX = RandomInt(4 - bigW);
-    bigZ = RandomInt(4 - bigL);
+    bigX = rand.nextInt(4 - bigW);
+    bigZ = rand.nextInt(4 - bigL);
 
     // mark where it is
     for (var x = bigX; x < bigX + bigW; x++)
@@ -537,7 +620,6 @@ function AddCitySquares() {
                 if (!cells[x - 1][z - 1])
                     DrawBuildingOrParkCell(x, z, 1, 1);
 
-    //======================================================
     //======================================================
     function DrawBuildingCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
         var cellWidth = cellW * squareBlocks;
@@ -558,7 +640,7 @@ function AddCitySquares() {
         // what color is the walls and floors?
         var wallID = BlockID.BRICK;
         var floorID = BlockID.IRON_ORE;
-        switch (RandomInt(5)) {
+        switch (rand.nextInt(5)) {
             case 1:
                 wallID = BlockID.IRON_BLOCK;
                 floorID = BlockID.IRON_ORE;
@@ -580,8 +662,8 @@ function AddCitySquares() {
         }
 
         // how many stories and what type of roof?
-        var stories = RandomInt(floorCount) + 1;
-        var roofStyle = RandomInt(4);
+        var stories = rand.nextInt(floorCount) + 1;
+        var roofStyle = rand.nextInt(4);
         var roofTop = roofStyle != 0 ? 1 : 0;
 
         // fix up really short buildings
@@ -659,7 +741,7 @@ function AddCitySquares() {
             // NS walls
             for (var x = minX; x <= maxX; x++) {
                 var sectionID = wallID;
-                if (RandomInt(2) == 1 && x != minX & x != maxX)
+                if (rand.nextInt(2) == 1 && x != minX & x != maxX)
                     sectionID = BlockID.GLASS;
 
                 for (var y = minY; y <= maxY; y++) {
@@ -671,7 +753,7 @@ function AddCitySquares() {
             // EW walls
             for (var z = minZ; z <= maxZ; z++) {
                 var sectionID = wallID;
-                if (RandomInt(2) == 1 && z != minZ && z != maxZ)
+                if (rand.nextInt(2) == 1 && z != minZ && z != maxZ)
                     sectionID = BlockID.GLASS;
 
                 for (var y = minY; y <= maxY; y++) {
@@ -716,15 +798,13 @@ function AddCitySquares() {
                 blocks[blockX - 4][sewerFloor + 3][blockZ] = BlockID.LIGHTSTONE;
 
                 // and a door 
-                // !BUG! - this rarely works correctly
-                //blocks[blockX - sewerHeight + 1][sewerFloor + 1][blockZ + 2] = BlockID.WOODEN_DOOR;
-                //blocks[blockX - sewerHeight + 1][sewerFloor + 0][blockZ + 2] = BlockID.WOODEN_DOOR;
+                SetLateBlock(blockX - sewerHeight + 1, sewerFloor, blockZ + 2, ExtendedID.WESTFACING_WOODEN_DOOR);
             }
         }
     }
 
     function RandomBuildingSize() {
-        switch (RandomInt(10)) {
+        switch (rand.nextInt(10)) {
             case 0:
             case 1:
             case 2:
@@ -743,7 +823,7 @@ function AddCitySquares() {
 
     function DrawBuildingOrParkCell(cellX, cellZ, cellW, cellL) {
         // little park instead of a building?
-        if (RandomInt(4) == 0 && !parkCreated) {
+        if (rand.nextInt(4) == 0 && !parkCreated) {
             DrawParkCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL)
             parkCreated = true;
         }
@@ -755,15 +835,13 @@ function AddCitySquares() {
 
 }
 
-// streets or bridges over canals
+// streets or bridges over canals (one of these days)
 function AddStreets() {
-    // add the roads
     for (var x = 0; x < squaresWidth; x++)
         for (var z = 0; z < squaresLength; z++)
             if (x % 4 == 0 || z % 4 == 0)
                 DrawStreetCell(x * squareBlocks, z * squareBlocks, x, z);
 
-    //======================================================
     //======================================================
     function DrawStreetCell(blockX, blockZ, cellX, cellZ) {
 
@@ -820,14 +898,14 @@ function AddStreets() {
         function DrawSewerPart(blockX, blockZ) {
             // first the walls
             var wallID = BlockID.COBBLESTONE;
-            if (RandomInt(2) == 0)
+            if (rand.nextInt(2) == 0)
                 wallID = BlockID.MOSSY_COBBLESTONE;
             AddWalls(wallID, blockX, sewerFloor, blockZ,
                          blockX + cornerBlocks - 1, sewerCeiling, blockZ + cornerBlocks - 1);
 
             // then the goodies
             var fillID = BlockID.DIRT;
-            switch (RandomInt(40)) {
+            switch (rand.nextInt(40)) {
                 case 0:
                 case 1:
                 case 2:
@@ -907,19 +985,19 @@ function AddParkLot() {
 }
 
 function AddDirtLot() {
-    FillCube(BlockID.DIRT, 1 * squareBlocks, 1, 1 * squareBlocks,
+    FillCube(BlockID.DIRT, 1 * squareBlocks, sewerFloor, 1 * squareBlocks,
                            4 * squareBlocks - 1, streetLevel, 4 * squareBlocks - 1);
 }
 
 function AddParkingLot() {
-    FillCube(BlockID.DIRT, 1 * squareBlocks, 1, 1 * squareBlocks,
+    FillCube(BlockID.DIRT, 1 * squareBlocks, sewerFloor, 1 * squareBlocks,
                            4 * squareBlocks - 1, streetLevel - 1, 4 * squareBlocks - 1);
     FillCube(BlockID.STONE, 1 * squareBlocks, streetLevel, 1 * squareBlocks,
                             4 * squareBlocks - 1, streetLevel, 4 * squareBlocks - 1);
 }
 
-function AddEmptyLot() {
-    // let see if we can literally do nothing
+function AddJustStreets() {
+    // let see if we can literally do nothing... hey it worked!
 }
 
 function AddManholes() {
@@ -935,13 +1013,24 @@ function AddManholes() {
     // offset the start so we are standing on the SE manhole
     origin = origin.add(-manX, -belowGround, -manZ);
 
+    //======================================================
     function AddSewerManhole(locX, locY, locZ) {
+        // Manhole down to sewer
         blocks[locX][locY - 1][locZ] = BlockID.LOG;
 
-        // !BUG! Manhole ladders don't "place" correctly
-        blocks[locX][locY - 2][locZ] = BlockID.AIR; //LADDER;
-        blocks[locX][locY - 3][locZ] = BlockID.AIR; //LADDER;
-        blocks[locX][locY - 4][locZ] = BlockID.AIR; //LADDER;
-        blocks[locX][locY - 5][locZ] = BlockID.AIR; //LADDER;
+        // Make room for the ladders
+        blocks[locX][locY - 2][locZ] = BlockID.AIR;
+        blocks[locX][locY - 3][locZ] = BlockID.AIR;
+        blocks[locX][locY - 4][locZ] = BlockID.AIR;
+
+        // Record the need for the ladders
+        SetLateBlock(locX, locY - 2, locZ, ExtendedID.SOUTHWARD_LADDER);
+        SetLateBlock(locX, locY - 3, locZ, ExtendedID.SOUTHWARD_LADDER);
+        SetLateBlock(locX, locY - 4, locZ, ExtendedID.SOUTHWARD_LADDER);
+
+        // Manhole down to the plumbing... WATCH OUT IT IS DANGEROUS DOWN THERE!
+        blocks[locX][locY - 5][locZ] = BlockID.LOG;
+        blocks[locX][locY - 6][locZ] = BlockID.AIR;
+        blocks[locX][locY - 7][locZ] = BlockID.AIR;
     }
 }
