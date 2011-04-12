@@ -95,6 +95,7 @@ var rand = new java.util.Random();
 
 // some pseudo-constants
 var squareBlocks = 15;
+var linesOffset = Math.floor(squareBlocks / 2);
 var plumbingHeight = 4;
 var sewerHeight = 3;
 var streetHeight = 2;
@@ -707,6 +708,11 @@ function AddCitySquares() {
                     AddWalls(floorID, blockX + 1, floorAt + r, blockZ + 2 + r,
                                       blockX + cellWidth - 2, floorAt + r, blockZ + cellLength - 3 - r);
 
+                // three more to finish things up
+                blocks[blockX + 4][floorAt - floorHeight][blockZ + 2] = BlockID.FENCE;
+                blocks[blockX + 4][floorAt - floorHeight][blockZ + 3] = BlockID.FENCE;
+                blocks[blockX + 4][floorAt - floorHeight][blockZ + 4] = BlockID.FENCE;
+
                 // fill in top with skylight
                 FillCube(BlockID.GLASS, blockX + 2, floorAt + floorHeight - 1, blockZ + 2 + floorHeight,
                                         blockX + cellWidth - 3, floorAt + floorHeight - 1, blockZ + cellLength - 3 - floorHeight);
@@ -716,6 +722,11 @@ function AddCitySquares() {
                 for (r = 0; r < floorHeight; r++)
                     AddWalls(floorID, blockX + 2 + r, floorAt + r, blockZ + 2 + r,
                                       blockX + cellWidth - 3 - r, floorAt + r, blockZ + cellLength - 3 - r);
+
+                // three more to finish things up
+                blocks[blockX + 4][floorAt - floorHeight][blockZ + 2] = BlockID.FENCE;
+                blocks[blockX + 4][floorAt - floorHeight][blockZ + 3] = BlockID.FENCE;
+                blocks[blockX + 4][floorAt - floorHeight][blockZ + 4] = BlockID.FENCE;
 
                 // fill in top with skylight
                 FillCube(BlockID.GLASS, blockX + 2 + floorHeight, floorAt + floorHeight - 1, blockZ + 2 + floorHeight,
@@ -875,6 +886,12 @@ function AddStreets() {
 
             DrawStreetlight(blockX + 0 * cornerBlocks + 2, blockZ + 1 * cornerBlocks + 2, true, false, false, false);
             DrawStreetlight(blockX + 2 * cornerBlocks + 2, blockZ + 1 * cornerBlocks + 2, false, false, true, false);
+            
+            // paint road lines
+            for (var z = 0; z < squareBlocks; z++)
+                if (z % 5 != 0 && z % 5 != 4)
+                    blocks[blockX + linesOffset][streetLevel][blockZ + z] = ExtendedID.YELLOW_CLOTH;
+
         } else if (cellX % 4 != 0 && cellZ % 4 == 0) {
             DrawSidewalk(blockX + 0 * cornerBlocks, blockZ + 0 * cornerBlocks,
                          blockX + 3 * cornerBlocks, blockZ + 1 * cornerBlocks - 2);
@@ -883,6 +900,12 @@ function AddStreets() {
 
             DrawStreetlight(blockX + 1 * cornerBlocks + 2, blockZ + 0 * cornerBlocks + 2, false, true, false, false);
             DrawStreetlight(blockX + 1 * cornerBlocks + 2, blockZ + 2 * cornerBlocks + 2, false, false, false, true);
+
+            // paint road lines
+            for (var x = 0; x < squareBlocks; x++)
+                if (x % 5 != 0 && x % 5 != 4)
+                    blocks[blockX + x][streetLevel][blockZ + linesOffset] = ExtendedID.YELLOW_CLOTH;
+
         } else if (cellX % 4 == 0 && cellZ % 4 == 0) {
             DrawSidewalkCorner(blockX + 0 * cornerBlocks, blockZ + 0 * cornerBlocks, 0, 0);
             DrawSidewalkCorner(blockX + 2 * cornerBlocks, blockZ + 0 * cornerBlocks, 2, 0);
@@ -893,6 +916,14 @@ function AddStreets() {
             DrawStreetlight(blockX + 2 * cornerBlocks + 2, blockZ + 0 * cornerBlocks + 2, false, true, true, false);
             DrawStreetlight(blockX + 2 * cornerBlocks + 2, blockZ + 2 * cornerBlocks + 2, false, false, true, true);
             DrawStreetlight(blockX + 0 * cornerBlocks + 2, blockZ + 2 * cornerBlocks + 2, true, false, false, true);
+
+            // paint crosswalk
+            for (var i = 0; i < 5; i++) {
+                blocks[blockX + 1][streetLevel][blockZ + linesOffset + i] = ExtendedID.WHITE_CLOTH;
+                blocks[blockX + squareBlocks - 2][streetLevel][blockZ + linesOffset - i] = ExtendedID.WHITE_CLOTH;
+                blocks[blockX + linesOffset - i][streetLevel][blockZ + 1] = ExtendedID.WHITE_CLOTH;
+                blocks[blockX + linesOffset + i][streetLevel][blockZ + squareBlocks - 2] = ExtendedID.WHITE_CLOTH;
+            }
         }
 
         function DrawSewerPart(blockX, blockZ) {
