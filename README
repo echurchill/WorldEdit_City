@@ -17,50 +17,41 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 * Issues (search for !BUG!)
-If you get a timeout error when running this script, open 
-   "plugins/worldedit/config.yml" and change "timeout" 
-   value (should be under "Scripting") to 10000 or larger
-Basement doors don't "place" correctly
-Manhole ladders don't "place" correctly
-Need to have the height of the block based on the legal height allowed
-  by Minecraft given the player's location
+If you get a timeout error when running this script, open "plugins/worldedit/config.yml" and change "timeout" value (should be under "Scripting") to 10000 or larger
+Need to figure out the height of the tallest legal block allowed by Minecraft given the player's location
 
 * Potential Upcoming Improvements
-phase 1
-arg options for park, town (short) and city (tall)
-place manholes and steps for parks
-place manholes for plumbing
-add street lines
-add trees to parks
-remove all doors and ladders for now
-
-phase 2
-add arg options for lots
-figure out doors and ladders (add them to buildings, stairs and access manholes)
-add parking lots and parking spaces
-add parking garage under 2x2 or larger
-improve fountian (rounder and scale it up if the park is bigger, maybe)
-add "government" buildings with lots of columns
-
-phase 3
-add arg option for neighborhood, ponds and canals
-layout houses 4 lots to a city square
-  house should centered in fenced lot
-  single story with more colors
-  they should have driveways and garages
-reduce the width/depth of the the building floors has they get taller
-regular (and existing random) windows in buildings
-add parks with ponds (nearly filling them)
-canals on the N, S, E or W sides (or combinations of the four)
+Neighborhoods (4 lots to a square, houses with fenced backyards, driveway, garages
+Farms (tilled and planted gardens with irrigation systems, possibly underground?)
+Ponds and canals (with bridges)
+Parking garages under 2x2 or larger buildings
+Government buildings with columns
+Stilted buildings (lots of columns around a core at first and then a normal city building on top)
+Reduce the width/depth of building floors as they go up (empire state building style)
+Skyscrapers (tallest building possible given the user's position)
+Improved slanted roofs (using steps) with overhangs
+Fancy fountians (multiple founts, rounder and scale up in larger parks)
 
 * Ponder
 Interior room generator? 
 Is there a way to speed up the transcription pass?
 
 * Fixed
-Wooden floors with accent only in walls
-Underground water reservoir beneath parks
-Parks
+Refactored the building/park resize and placement logic
+Rework the building material logics (more colored cloth, less fire proof)
+Doors for the buildings
+Regular (and existing random) windows in buildings
+Add street lines
+Door and ladder fixup logic working
+Place manholes for plumbing
+Ladders down to reservoirs and sewers
+Renamed emptylot to dirtlot
+Placed manholes in parks
+Arg options for emptylots, parks, parkinglots, streetsonly, towns (short) and cities (tall)
+Add some lights to the reservoirs
+Remove all doors and ladders for now, not really a fix more of an avoiding
+Wooden floors with accent only in building's walls
+Parks with underground water reservoirs 
 Skylights on roofs
 Support 3x3, 3x2, 2x3, 3x1, 1x3, 2x2, 2x1 and 1x2 buildings
 Pyramid, needle or tented roofs for buildings

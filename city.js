@@ -22,34 +22,32 @@ If you get a timeout error when running this script, open "plugins/worldedit/con
 Need to figure out the height of the tallest legal block allowed by Minecraft given the player's location
 
 * Potential Upcoming Improvements
-add street lines
-rework the building/park/etc. resize and placement logic
-add parking garage under 2x2 or larger
-improve fountain (rounder and scale it up if the park is bigger, maybe)
-add trees to parks (fix up phase to add trees) 
-add "government" buildings with lots of columns
-add arg option for neighborhood, ponds and canals
-layout houses 4 lots to a city square. house should centered in fenced lot. single story with more colors. they should have driveways and garages
-add roof overhang and better colored roofs (colored wool)
-reduce the width/depth of the the building floors has they get taller
-better colored walls using wool (mind you the building will be less fire proof)
-regular (and existing random) windows in buildings
-add parks with ponds (nearly filling them)
-canals on the N, S, E or W sides (or combinations of the four)
+Neighborhoods (4 lots to a square, houses with fenced backyards, driveway, garages
+Farms (tilled and planted gardens with irrigation systems, possibly underground?)
+Ponds and canals (with bridges)
+Parking garages under 2x2 or larger buildings
+Government buildings with columns
+Stilted buildings (lots of columns around a core at first and then a normal city building on top)
+Reduce the width/depth of building floors as they go up (empire state building style)
+Improved slanted roofs (using steps) with overhangs
+Fancy fountians (multiple founts, rounder and scale up in larger parks)
 
 * Ponder
 Interior room generator? 
 Is there a way to speed up the transcription pass?
-Farm generator?
 
 * Fixed
-door and ladder fixup logic working
-place manholes for plumbing
-ladders down to reservoirs
-ladders down to sewers
-renamed emptylot to dirtlot
-Place manholes in parks
-Arg options for emptylots, parks, parkinglots, streets only, towns (short) and cities (tall)
+Refactored the building/park resize and placement logic
+Rework the building material logics (more colored cloth, less fire proof)
+Doors for the buildings
+Regular (and existing random) windows in buildings
+Add street lines
+Door and ladder fixup logic working
+Place manholes for plumbing
+Ladders down to reservoirs and sewers
+Renamed emptylot to dirtlot
+Placed manholes in parks
+Arg options for emptylots, parks, parkinglots, streetsonly, towns (short) and cities (tall)
 Add some lights to the reservoirs
 Remove all doors and ladders for now, not really a fix more of an avoiding
 Wooden floors with accent only in building's walls
@@ -135,7 +133,7 @@ else if (/PARK/i.test(modeArg))
     modeCreate = createMode.park
 
 // all else fails let's show some help
-else 
+else
     modeCreate = createMode.Help;
 
 // show help
@@ -182,7 +180,7 @@ else {
         "BROWN_CLOTH": EncodeBlock(BlockID.CLOTH, 12),
         "DARK_GREEN_CLOTH": EncodeBlock(BlockID.CLOTH, 13),
         "RED_CLOTH": EncodeBlock(BlockID.CLOTH, 14),
-        "BLACK": EncodeBlock(BlockID.CLOTH, 15)
+        "BLACK_CLOTH": EncodeBlock(BlockID.CLOTH, 15)
     };
 
     // making room to create
@@ -205,7 +203,6 @@ else {
     switch (modeCreate) {
         case createMode.city:
         case createMode.town:
-            // add sewer, reservoirs, parks and buildings 
             AddCitySquares();
             break;
         case createMode.park:
@@ -346,15 +343,13 @@ function LateItem(atX, atY, atZ, id) {
         //context.print(id + " " + data);
 
         // late creation
-        editsess.smartSetBlock(origin.add(this.blockX, this.blockY, this.blockZ),
+        editsess.rawSetBlock(origin.add(this.blockX, this.blockY, this.blockZ),
                                new BaseBlock(id, data));
 
-        // fix up doors
-        if (id == BlockID.WOODEN_DOOR) {
-            //context.print(id + " " + (data + 8));
-            editsess.smartSetBlock(origin.add(this.blockX, this.blockY + 1, this.blockZ),
-                               new BaseBlock(id, data + 8));
-        }
+        // fix up the top of the doors
+        if (id == BlockID.WOODEN_DOOR)
+            editsess.rawSetBlock(origin.add(this.blockX, this.blockY + 1, this.blockZ),
+                                 new BaseBlock(id, data + 8));
     }
 }
 
@@ -456,7 +451,7 @@ function AddPlumbingLevel() {
                     blocks[x * 2][1][z * 2] = BlockID.RED_MUSHROOM;
                     break;
 
-                // what did people flush down the toilet? 
+                // what did people flush down the toilet?     
                 case 11: //  6.7%
                     blocks[x * 2][1][z * 2] = BlockID.GOLD_BLOCK;
                     break;
@@ -517,13 +512,13 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
         for (var z = cornerWidth; z < cellLength; z = z + cornerWidth)
             for (var y = 1; y < streetLevel; y++)
 
-                // every other column has a lit base
+            // every other column has a lit base
                 if (y == 1 && ((x % 2 == 0 && z % 2 == 1) ||
                                (x % 2 == 1 && z % 2 == 0)))
                     blocks[blockX + x][y][blockZ + z] = BlockID.LIGHTSTONE;
                 else
                     blocks[blockX + x][y][blockZ + z] = BlockID.SANDSTONE;
-            
+
 
     // cap it off
     FillCellLayer(BlockID.SANDSTONE, blockX, blockZ, streetLevel, cellW, cellL);
@@ -533,13 +528,13 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
 
     // add an access point to the reservoir
     blocks[blockX + 2][streetLevel + 1][blockZ + 1] = BlockID.LOG;
-    blocks[blockX + 2][streetLevel    ][blockZ + 1] = BlockID.AIR;
+    blocks[blockX + 2][streetLevel][blockZ + 1] = BlockID.AIR;
     blocks[blockX + 3][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
     blocks[blockX + 2][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
     blocks[blockX + 1][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
 
     // Record the need for the ladders
-    SetLateBlock(blockX + 2, streetLevel    , blockZ + 1, ExtendedID.WESTWARD_LADDER);
+    SetLateBlock(blockX + 2, streetLevel, blockZ + 1, ExtendedID.WESTWARD_LADDER);
     SetLateBlock(blockX + 2, streetLevel - 1, blockZ + 1, ExtendedID.WESTWARD_LADDER);
     SetLateBlock(blockX + 2, streetLevel - 2, blockZ + 1, ExtendedID.WESTWARD_LADDER);
 
@@ -573,22 +568,27 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     blocks[fountainX + 2][streetLevel + 5][fountainZ + 2] = BlockID.WATER;
 
     // add some trees
-//    for (var x = 2; x < cellWidth - 2; x++)
-//        for (var z = 2; z < cellLength - 2; z++)
-//            if (blocks[x][streetLevel + 1][z] == BlockID.GRASS && rand.nextInt(2) > 0)
-//                FixupTree(x, streetLevel + 2, z);
-//    PushTree(5, streetLevel + 1, 5);
+    //    for (var x = 2; x < cellWidth - 2; x++)
+    //        for (var z = 2; z < cellLength - 2; z++)
+    //            if (blocks[x][streetLevel + 1][z] == BlockID.GRASS && rand.nextInt(2) > 0)
+    //                FixupTree(x, streetLevel + 2, z);
+    //    PushTree(5, streetLevel + 1, 5);
 }
 
 function AddCitySquares() {
     context.print("Building");
 
-    // only one park per city square, max. otherwise it just looks weird
-    var parkCreated = false;
+    // upper limits
+    var maxSize = 3;
+    var parksAllowed = 1;
 
-    // NEED TO REWORK THIS DARN CODE!
-    // big building/park support
-    var bigW = 3, bigL = 3, bigX = 0, bigZ = 0;
+    // if we are in a town then change them a bit
+    if (modeCreate == createMode.town){
+        maxSize = 2;
+        parksAllowed = 2;
+        }
+
+    // initialize the building cells
     var cells = new Array(3);
     for (var x = 0; x < 3; x++) {
         cells[x] = new Array(3);
@@ -596,32 +596,45 @@ function AddCitySquares() {
             cells[x][z] = false;
     }
 
-    // figure out how big the big building will be... silly and should be refactored
-    do {
-        bigW = RandomBuildingSize();
-        bigL = RandomBuildingSize();
-    } while (bigW == 1 && bigL == 1);
+    // work our way through the cells
+    var sizeX = 1;
+    var sizeZ = 1;
+    for (var atX = 0; atX < 3; atX++)
+        for (var atZ = 0; atZ < 3; atZ++)
+            if (!cells[atX][atZ]) { // nothing here yet.. build!
+                sizeX = 1;
+                sizeZ = 1;
 
-    // where will it fit?
-    bigX = rand.nextInt(4 - bigW);
-    bigZ = rand.nextInt(4 - bigL);
+                // 33% of time see if a bigger building will fit
+                if (rand.nextInt(3) == 0) {
+                    sizeX = rand.nextInt(Math.max(1, maxSize - atX)) + 1;
+                    sizeZ = rand.nextInt(Math.max(1, maxSize - atZ)) + 1;
 
-    // mark where it is
-    for (var x = bigX; x < bigX + bigW; x++)
-        for (var z = bigZ; z < bigZ + bigL; z++)
-            cells[x][z] = true;
+                    // mark the cells
+                    for (var x = atX; x < atX + sizeX; x++)
+                        for (var z = atZ; z < atZ + sizeZ; z++)
+                            cells[x][z] = true;
+                }
+                else
+                    cells[atX][atZ] = true;
 
-    // finally actually place it there
-    DrawBuildingOrParkCell(bigX + 1, bigZ + 1, bigW, bigL);
-
-    // add basements and building if there isn't one there yet
-    for (var x = 0; x < squaresWidth; x++)
-        for (var z = 0; z < squaresLength; z++)
-            if (!(x % 4 == 0 || z % 4 == 0))
-                if (!cells[x - 1][z - 1])
-                    DrawBuildingOrParkCell(x, z, 1, 1);
+                // make it so!
+                DrawBuildingOrParkCell(atX + 1, atZ + 1, sizeX, sizeZ);
+            }
 
     //======================================================
+    function DrawBuildingOrParkCell(cellX, cellZ, cellW, cellL) {
+        // little park instead of a building?
+        if (rand.nextInt(4) == 0 && parksAllowed > 0) {
+            DrawParkCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL)
+            parksAllowed--;
+        }
+
+        // fine.. be boring, let's make a building
+        else
+            DrawBuildingCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL);
+    }
+
     function DrawBuildingCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
         var cellWidth = cellW * squareBlocks;
         var cellLength = cellL * squareBlocks;
@@ -640,23 +653,114 @@ function AddCitySquares() {
 
         // what color is the walls and floors?
         var wallID = BlockID.BRICK;
-        var floorID = BlockID.IRON_ORE;
-        switch (rand.nextInt(5)) {
+        var edgingID = BlockID.IRON_ORE;
+        var floorID = BlockID.WOOD;
+        var roofID = BlockID.WOOD;
+        var buildingType = rand.nextInt(24);
+        switch (buildingType) {
+            case 0:
+                wallID = BlockID.DOUBLE_STEP;
+                edgingID = BlockID.MOSSY_COBBLESTONE;
+                break;
             case 1:
                 wallID = BlockID.IRON_BLOCK;
-                floorID = BlockID.IRON_ORE;
+                edgingID = BlockID.IRON_ORE;
                 break;
             case 2:
                 wallID = BlockID.SAND;
-                floorID = BlockID.WOOD;
+                edgingID = BlockID.WOOD;
                 break;
             case 3:
                 wallID = BlockID.WOOD;
-                floorID = BlockID.SANDSTONE;
+                edgingID = BlockID.SANDSTONE;
                 break;
             case 4:
                 wallID = BlockID.CLAY;
-                floorID = BlockID.COBBLESTONE;
+                edgingID = BlockID.COBBLESTONE;
+                break;
+            case 5:
+                wallID = ExtendedID.GRAY_CLOTH;
+                edgingID = ExtendedID.WHITE_CLOTH;
+                break;
+            case 6:
+                wallID = ExtendedID.GRAY_CLOTH;
+                edgingID = ExtendedID.LIGHT_GRAY_CLOTH;
+                break;
+            case 7:
+                wallID = ExtendedID.LIGHT_GRAY_CLOTH;
+                edgingID = ExtendedID.BLACK_CLOTH;
+                break;
+            case 8:
+                wallID = ExtendedID.LIGHT_BLUE_CLOTH;
+                edgingID = ExtendedID.BLUE_CLOTH;
+                break;
+            case 9:
+                wallID = ExtendedID.DARK_GREEN_CLOTH;
+                edgingID = ExtendedID.LIGHT_GREEN_CLOTH;
+                break;
+            case 10:
+                wallID = ExtendedID.YELLOW_CLOTH;
+                edgingID = ExtendedID.BROWN_CLOTH;
+                break;
+            case 11:
+                wallID = ExtendedID.LIGHT_GRAY_CLOTH;
+                edgingID = ExtendedID.RED_CLOTH;
+                break;
+            case 12:
+                wallID = ExtendedID.GRAY_CLOTH;
+                edgingID = ExtendedID.MAGENTA_CLOTH;
+                break;
+            case 13:
+                wallID = ExtendedID.GRAY_CLOTH;
+                edgingID = ExtendedID.PURPLE_CLOTH;
+                roofID = BlockID.GLASS;
+                break;
+            case 14:
+                wallID = ExtendedID.LIGHT_GRAY_CLOTH;
+                edgingID = ExtendedID.ORANGE_CLOTH;
+                break;
+            case 15:
+                wallID = ExtendedID.CYAN_CLOTH;
+                edgingID = ExtendedID.LIGHT_BLUE_CLOTH;
+                break;
+            case 16:
+                wallID = ExtendedID.GRAY_CLOTH;
+                edgingID = BlockID.GLASS;
+                floorID = ExtendedID.LIGHT_GRAY_CLOTH;
+                break;
+            case 17:
+                wallID = BlockID.STONE;
+                edgingID = BlockID.GLASS;
+                floorID = ExtendedID.LIGHT_GRAY_CLOTH;
+                break;
+            case 18:
+                wallID = ExtendedID.BLUE_CLOTH;
+                edgingID = BlockID.GLASS;
+                floorID = ExtendedID.LIGHT_BLUE_CLOTH;
+                break;
+            case 19:
+                wallID = ExtendedID.BLACK_CLOTH;
+                edgingID = BlockID.GLASS;
+                floorID = ExtendedID.WHITE_CLOTH;
+                roofID = BlockID.GLASS;
+                break;
+            case 20:
+                wallID = BlockID.STONE;
+                edgingID = BlockID.GLASS;
+                floorID = BlockID.STONE;
+                roofID = BlockID.GLASS;
+                break;
+            case 21:
+                wallID = ExtendedID.PURPLE_CLOTH;
+                edgingID = BlockID.GLASS;
+                floorID = ExtendedID.LIGHT_GRAY_CLOTH;
+                roofID = BlockID.GLASS;
+                break;
+            case 22:
+                wallID = ExtendedID.DARK_GREEN_CLOTH;
+                edgingID = BlockID.GLASS;
+                floorID = ExtendedID.WHITE_CLOTH;
+                roofID = BlockID.GLASS;
                 break;
             default:
                 break;
@@ -665,95 +769,106 @@ function AddCitySquares() {
         // how many stories and what type of roof?
         var stories = rand.nextInt(floorCount) + 1;
         var roofStyle = rand.nextInt(4);
-        var roofTop = roofStyle != 0 ? 1 : 0;
+        if (roofID == BlockID.GLASS && roofStyle == 3) // if the roof is made of glass, can't be flat
+            roofStyle = rand.nextInt(3);
 
-        // fix up really short buildings
-        if (stories == 1 && roofStyle != 0)
+        // is there an angled roof? if so then the building should be one story shorter
+        var roofTop = roofStyle < 3 ? 1 : 0;
+        if (stories == 1 && roofTop)
             stories++;
+
+        // random windows or not
+        var windowStyle = rand.nextInt(3);
 
         // build the building
         for (var story = 0; story < (stories - roofTop); story++) {
             var floorAt = story * floorHeight + firstFloor + 1;
-            FillFloor(wallID, floorID,
+            FillFloor(wallID, edgingID, floorID,
                       blockX + 1, floorAt, blockZ + 1,
-                      blockX + cellWidth - 2, floorAt + floorHeight - 2, blockZ + cellLength - 2);
+                      blockX + cellWidth - 2, floorAt + floorHeight - 2, blockZ + cellLength - 2,
+                      windowStyle, story, stories - roofTop - 1);
 
             // add some stairs, but not to the roof
-            if (story < (stories - roofTop - 1) || roofStyle < 2)
+            if (story < (stories - roofTop - 1) || roofStyle == 3)
                 PunchStairs(BlockID.WOODEN_STAIRS, blockX + 5, blockZ + 2, floorAt + floorHeight - 1,
                                                    false, true);
         }
 
-        // add the fancy roof if needed
-        floorAt = (stories - 1) * floorHeight + firstFloor + 1;
-        switch (roofStyle) {
-            case 1:
-                // NS ridge
-                for (r = 0; r < floorHeight; r++)
-                    AddWalls(floorID, blockX + 2 + r, floorAt + r, blockZ + 1,
-                                      blockX + cellWidth - 3 - r, floorAt + r, blockZ + cellLength - 2);
+        // where is the roof?
+        var roofAt = (stories - 1) * floorHeight + firstFloor + 1;
 
-                // three more to finish things up
-                blocks[blockX + 4][floorAt][blockZ + 2] = BlockID.FENCE;
-                blocks[blockX + 4][floorAt][blockZ + 3] = BlockID.FENCE;
-                blocks[blockX + 4][floorAt][blockZ + 4] = BlockID.FENCE;
+        // flat roofs are special
+        if (roofStyle == 3) {
 
-                // fill in top with skylight
-                FillCube(BlockID.GLASS, blockX + 2 + floorHeight, floorAt + floorHeight - 1, blockZ + 2,
-                                        blockX + cellWidth - 3 - floorHeight, floorAt + floorHeight - 1, blockZ + cellLength - 3);
-                break;
-            case 2:
-                // EW ridge
-                for (r = 0; r < floorHeight; r++)
-                    AddWalls(floorID, blockX + 1, floorAt + r, blockZ + 2 + r,
-                                      blockX + cellWidth - 2, floorAt + r, blockZ + cellLength - 3 - r);
-
-                // three more to finish things up
-                blocks[blockX + 4][floorAt - floorHeight][blockZ + 2] = BlockID.FENCE;
-                blocks[blockX + 4][floorAt - floorHeight][blockZ + 3] = BlockID.FENCE;
-                blocks[blockX + 4][floorAt - floorHeight][blockZ + 4] = BlockID.FENCE;
-
-                // fill in top with skylight
-                FillCube(BlockID.GLASS, blockX + 2, floorAt + floorHeight - 1, blockZ + 2 + floorHeight,
-                                        blockX + cellWidth - 3, floorAt + floorHeight - 1, blockZ + cellLength - 3 - floorHeight);
-                break;
-            case 3:
-                // pointy
-                for (r = 0; r < floorHeight; r++)
-                    AddWalls(floorID, blockX + 2 + r, floorAt + r, blockZ + 2 + r,
-                                      blockX + cellWidth - 3 - r, floorAt + r, blockZ + cellLength - 3 - r);
-
-                // three more to finish things up
-                blocks[blockX + 4][floorAt - floorHeight][blockZ + 2] = BlockID.FENCE;
-                blocks[blockX + 4][floorAt - floorHeight][blockZ + 3] = BlockID.FENCE;
-                blocks[blockX + 4][floorAt - floorHeight][blockZ + 4] = BlockID.FENCE;
-
-                // fill in top with skylight
-                FillCube(BlockID.GLASS, blockX + 2 + floorHeight, floorAt + floorHeight - 1, blockZ + 2 + floorHeight,
-                                        blockX + cellWidth - 3 - floorHeight, floorAt + floorHeight - 1, blockZ + cellLength - 3 - floorHeight);
-                break;
-            default:
-                // flat roofs can have one more stairs
-                PunchStairs(BlockID.WOODEN_STAIRS, blockX + 5, blockZ + 2, floorAt + floorHeight - 1,
+            // flat roofs can have one more stairs
+            PunchStairs(BlockID.WOODEN_STAIRS, blockX + 5, blockZ + 2, roofAt + floorHeight - 1,
                             false, true);
 
-                // now add some more fences
-                AddWalls(BlockID.FENCE, blockX + 1, floorAt + floorHeight, blockZ + 1,
-                                        blockX + cellWidth - 2, floorAt + floorHeight, blockZ + cellLength - 2);
+            // now add some more fences
+            AddWalls(BlockID.FENCE, blockX + 1, roofAt + floorHeight, blockZ + 1,
+                                        blockX + cellWidth - 2, roofAt + floorHeight, blockZ + cellLength - 2);
 
-                // three more to finish things up
-                blocks[blockX + 4][floorAt + floorHeight][blockZ + 2] = BlockID.FENCE;
-                blocks[blockX + 4][floorAt + floorHeight][blockZ + 3] = BlockID.FENCE;
-                blocks[blockX + 4][floorAt + floorHeight][blockZ + 4] = BlockID.FENCE;
-                break;
+            // three more to finish things up
+            blocks[blockX + 4][roofAt + floorHeight][blockZ + 2] = BlockID.FENCE;
+            blocks[blockX + 4][roofAt + floorHeight][blockZ + 3] = BlockID.FENCE;
+            blocks[blockX + 4][roofAt + floorHeight][blockZ + 4] = BlockID.FENCE;
+        }
+        else {
+            // skylight or not? 1/3
+            var skylightID = rand.nextInt(3) == 0 ? roofID : BlockID.GLASS;
+
+            // hollow out the ceiling
+            if (skylightID == BlockID.GLASS || roofID == BlockID.GLASS)
+                FillLayer(BlockID.AIR, blockX + 2, blockZ + 2, roofAt - 1, cellWidth - 4, cellLength - 4);
+
+            // three more to finish things up on the floor below
+            blocks[blockX + 4][roofAt - floorHeight][blockZ + 2] = BlockID.FENCE;
+            blocks[blockX + 4][roofAt - floorHeight][blockZ + 3] = BlockID.FENCE;
+            blocks[blockX + 4][roofAt - floorHeight][blockZ + 4] = BlockID.FENCE;
+
+            // cap the building
+            switch (roofStyle) {
+                case 0:
+                    // NS ridge
+                    for (r = 0; r < floorHeight; r++)
+                        AddWalls(roofID, blockX + 2 + r, roofAt + r, blockZ + 1,
+                                         blockX + cellWidth - 3 - r, roofAt + r, blockZ + cellLength - 2);
+
+                    // fill in top with skylight
+                    FillCube(skylightID, blockX + 2 + floorHeight, roofAt + floorHeight - 1, blockZ + 2,
+                                         blockX + cellWidth - 3 - floorHeight, roofAt + floorHeight - 1, blockZ + cellLength - 3);
+                    break;
+                case 1:
+                    // EW ridge
+                    for (r = 0; r < floorHeight; r++)
+                        AddWalls(roofID, blockX + 1, roofAt + r, blockZ + 2 + r,
+                                     blockX + cellWidth - 2, roofAt + r, blockZ + cellLength - 3 - r);
+
+                    // fill in top with skylight
+                    FillCube(skylightID, blockX + 2, roofAt + floorHeight - 1, blockZ + 2 + floorHeight,
+                                         blockX + cellWidth - 3, roofAt + floorHeight - 1, blockZ + cellLength - 3 - floorHeight);
+                    break;
+
+                default:
+                    // pointy
+                    for (r = 0; r < floorHeight; r++)
+                        AddWalls(roofID, blockX + 2 + r, roofAt + r, blockZ + 2 + r,
+                                         blockX + cellWidth - 3 - r, roofAt + r, blockZ + cellLength - 3 - r);
+
+                    // fill in top with skylight
+                    FillCube(skylightID, blockX + 2 + floorHeight, roofAt + floorHeight - 1, blockZ + 2 + floorHeight,
+                                         blockX + cellWidth - 3 - floorHeight, roofAt + floorHeight - 1, blockZ + cellLength - 3 - floorHeight);
+                    break;
+            }
         }
 
-        function FillFloor(wallID, floorID, minX, minY, minZ, maxX, maxY, maxZ) {
+        function FillFloor(wallID, edgingID, floorID, minX, minY, minZ, maxX, maxY, maxZ, windowStyle, story, topstory) {
+
             // NS walls
+            var window = 0;
             for (var x = minX; x <= maxX; x++) {
-                var sectionID = wallID;
-                if (rand.nextInt(2) == 1 && x != minX & x != maxX)
-                    sectionID = BlockID.GLASS;
+                var sectionID = ComputeWindowID(windowStyle, wallID, x, minX, minY, window);
+                window++;
 
                 for (var y = minY; y <= maxY; y++) {
                     blocks[x][y][minZ] = sectionID;
@@ -762,10 +877,10 @@ function AddCitySquares() {
             }
 
             // EW walls
+            window = 0;
             for (var z = minZ; z <= maxZ; z++) {
-                var sectionID = wallID;
-                if (rand.nextInt(2) == 1 && z != minZ && z != maxZ)
-                    sectionID = BlockID.GLASS;
+                var sectionID = ComputeWindowID(windowStyle, wallID, z, minZ, minZ, window);
+                window++;
 
                 for (var y = minY; y <= maxY; y++) {
                     blocks[minX][y][z] = sectionID;
@@ -773,12 +888,60 @@ function AddCitySquares() {
                 }
             }
 
-            // draw the ceiling
-            AddWalls(floorID, minX, maxY + 1, minZ, maxX, maxY + 1, maxZ);
-            FillLayer(BlockID.WOOD, minX + 1, minZ + 1, maxY + 1, maxX - minX - 1, maxZ - minZ - 1);
-            //for (var x = minX; x <= maxX; x++)
-            //    for (var z = minZ; z <= maxZ; z++)
-            //        blocks[x][maxY + 1][z] = floorID;
+            // draw the ceiling edge, the topmost one is special
+            if (story < topstory) {
+                AddWalls(edgingID, minX, maxY + 1, minZ, maxX, maxY + 1, maxZ);
+                FillLayer(floorID, minX + 1, minZ + 1, maxY + 1, maxX - minX - 1, maxZ - minZ - 1);
+            }
+            else
+                FillLayer(floorID, minX, minZ, maxY + 1, maxX - minX + 1, maxZ - minZ + 1);
+
+            // are we on the ground floor? if so let's add some doors
+            if (story == 0) {
+                var punchedDoor = false;
+
+                // fifty/fifty chance of a door on a side, but there must be one somewhere
+                if (rand.nextInt(2) == 0) {
+                    PunchDoor(minX + 2, minY, minZ, ExtendedID.WESTFACING_WOODEN_DOOR);
+                    punchedDoor = true;
+                }
+                if (rand.nextInt(2) == 0) {
+                    PunchDoor(maxX, minY, minZ + 2, ExtendedID.NORTHFACING_WOODEN_DOOR);
+                    punchedDoor = true;
+                }
+                if (rand.nextInt(2) == 0) {
+                    PunchDoor(maxX - 2, minY, maxZ, ExtendedID.EASTFACING_WOODEN_DOOR);
+                    punchedDoor = true;
+                }
+                if (!punchedDoor || rand.nextInt(2) == 0)
+                    PunchDoor(minX, minY, maxZ - 2, ExtendedID.SOUTHFACING_WOODEN_DOOR);
+            }
+        }
+
+        function ComputeWindowID(style, defaultID, curAt, minAt, maxAt, state) {
+            var windowID = defaultID;
+
+            switch (style) {
+                case 1:
+                    if (curAt != minAt && curAt != maxAt && rand.nextInt(2) == 0)
+                        windowID = BlockID.GLASS;
+                    break;
+                case 2:
+                    if (state % 3 == 1 || state % 3 == 2)
+                        windowID = BlockID.GLASS;
+                    break;
+                default:
+                    if (state % 4 == 1 || state % 4 == 2 || state % 4 == 3)
+                        windowID = BlockID.GLASS;
+                    break;
+            }
+            return windowID;
+        }
+
+        function PunchDoor(blockX, blockY, blockZ, doorID) {
+            blocks[blockX][blockY][blockZ] = BlockID.AIR;
+            blocks[blockX][blockY + 1][blockZ] = BlockID.AIR;
+            SetLateBlock(blockX, blockY, blockZ, doorID);
         }
 
         function PunchStairs(stairID, blockX, blockZ, floorY, addStairwell, addGuardrail) {
@@ -820,30 +983,17 @@ function AddCitySquares() {
             case 1:
             case 2:
             case 3:
-                return 1; // 40%
             case 4:
+                return 1; // 50%
             case 5:
             case 6:
             case 7:
             case 8:
-                return 2; // 50%
+                return 2; // 40%
             default:
                 return 3; // 10%
         }
     }
-
-    function DrawBuildingOrParkCell(cellX, cellZ, cellW, cellL) {
-        // little park instead of a building?
-        if (rand.nextInt(4) == 0 && !parkCreated) {
-            DrawParkCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL)
-            parkCreated = true;
-        }
-
-        // fine.. be boring, let's make a building
-        else
-            DrawBuildingCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL);
-    }
-
 }
 
 // streets or bridges over canals (one of these days)
@@ -886,7 +1036,7 @@ function AddStreets() {
 
             DrawStreetlight(blockX + 0 * cornerBlocks + 2, blockZ + 1 * cornerBlocks + 2, true, false, false, false);
             DrawStreetlight(blockX + 2 * cornerBlocks + 2, blockZ + 1 * cornerBlocks + 2, false, false, true, false);
-            
+
             // paint road lines
             for (var z = 0; z < squareBlocks; z++)
                 if (z % 5 != 0 && z % 5 != 4)
