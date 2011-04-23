@@ -16,17 +16,19 @@
 * You should have received a copy of the GNU General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-* Issues (search for !BUG!)
+* Issues
 If you get a timeout error when running this script, open "plugins/worldedit/config.yml" and change "timeout" value (should be under "Scripting") to 10000 or larger
+Warn people when timeout is too small, alas context.configuration does not seem to be loaded
 Need to figure out the height of the tallest legal block allowed by Minecraft given the player's location
 
 * Potential Upcoming Improvements
 Neighborhoods (4 lots to a square, houses with fenced backyards, driveway, garages
-Farms (tilled and planted gardens with irrigation systems, possibly underground?)
+Farms (tilled and planted gardens with irrigation systems, possibly underground irrigation? how about greenhouses?)
 Ponds and canals (with bridges)
-Parking garages under 2x2 or larger buildings
+Paint lines in the parking lot
+Instead of basements, Parking garages under 2x2 or larger buildings
 Government buildings with columns
-Stilted buildings (lots of columns around a core at first and then a normal city building on top)
+Buildings on stilts (lots of columns around a core at first and then a normal city building on top)
 Reduce the width/depth of building floors as they go up (empire state building style)
 Skyscrapers (tallest building possible given the user's position)
 Improved slanted roofs (using steps) with overhangs
@@ -34,9 +36,12 @@ Fancy fountians (multiple founts, rounder and scale up in larger parks)
 
 * Ponder
 Interior room generator? 
-Is there a way to speed up the transcription pass?
 
 * Fixed
+No random buildings in buildings
+Trees in parks!
+Fixed the spelling of JUSTSTEETS
+Optimized transcription a bit (around 10% faster, on average) by getting before setting
 Refactored the building/park resize and placement logic
 Rework the building material logics (more colored cloth, less fire proof)
 Doors for the buildings
@@ -64,13 +69,12 @@ Get rid of the "make a region first" requirement
 Sewer treasure encroaches onto the plumbing level
 Need to narrow the sidewalks 
 Add sandstone accent for wood structures 
-Stairs (down into the basement, up to roof) 
+Stairs (down into the basement, up to roof when doable) 
 Streetlights 
 Manholes w/ladders down to the sewer (be the "focal" point)
 
 * Answered
 How do I increase the duration of script execution? - plugins/worldedit/config.yml
-Should there be support for smaller blocks 2x2 instead of 3x3? - NO
 
 * Left to player(s)
 Plumbing level isn't bounded at the city edge 

@@ -17,26 +17,32 @@
 * You should have received a copy of the GNU General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-* Issues (search for !BUG!)
+* Issues
 If you get a timeout error when running this script, open "plugins/worldedit/config.yml" and change "timeout" value (should be under "Scripting") to 10000 or larger
+Warn people when timeout is too small, alas context.configuration does not seem to be loaded
 Need to figure out the height of the tallest legal block allowed by Minecraft given the player's location
 
 * Potential Upcoming Improvements
 Neighborhoods (4 lots to a square, houses with fenced backyards, driveway, garages
-Farms (tilled and planted gardens with irrigation systems, possibly underground?)
+Farms (tilled and planted gardens with irrigation systems, possibly underground irrigation? how about greenhouses?)
 Ponds and canals (with bridges)
-Parking garages under 2x2 or larger buildings
+Paint lines in the parking lot
+Instead of basements, Parking garages under 2x2 or larger buildings
 Government buildings with columns
-Stilted buildings (lots of columns around a core at first and then a normal city building on top)
+Buildings on stilts (lots of columns around a core at first and then a normal city building on top)
 Reduce the width/depth of building floors as they go up (empire state building style)
+Skyscrapers (tallest building possible given the user's position)
 Improved slanted roofs (using steps) with overhangs
 Fancy fountians (multiple founts, rounder and scale up in larger parks)
 
 * Ponder
 Interior room generator? 
-Is there a way to speed up the transcription pass?
 
 * Fixed
+No random buildings in buildings
+Trees in parks!
+Fixed the spelling of JUSTSTEETS
+Optimized transcription a bit (around 10% faster, on average) by getting before setting
 Refactored the building/park resize and placement logic
 Rework the building material logics (more colored cloth, less fire proof)
 Doors for the buildings
@@ -64,13 +70,12 @@ Get rid of the "make a region first" requirement
 Sewer treasure encroaches onto the plumbing level
 Need to narrow the sidewalks 
 Add sandstone accent for wood structures 
-Stairs (down into the basement, up to roof) 
+Stairs (down into the basement, up to roof when doable) 
 Streetlights 
 Manholes w/ladders down to the sewer (be the "focal" point)
 
 * Answered
 How do I increase the duration of script execution? - plugins/worldedit/config.yml
-Should there be support for smaller blocks 2x2 instead of 3x3? - NO
 
 * Left to player(s)
 Plumbing level isn't bounded at the city edge 
@@ -112,7 +117,7 @@ var cityFloorCount = 10;
 var townFloorCount = 3;
 
 // what do you want to create
-var helpString = "[HELP | CITY | TOWN | PARK | DIRTLOT | PARKINGLOT | JUSTSTEETS]"
+var helpString = "[HELP | CITY | TOWN | PARK | DIRTLOT | PARKINGLOT | JUSTSTREETS]"
 context.checkArgs(0, -1, helpString);
 var modeCreate;
 var createMode = { "city": 0, "town": 1, "park": 2, "dirtlot": 3, "parkinglot": 4, "juststreets": 5, "help": -1 };
@@ -121,7 +126,7 @@ var modeArg = argv.length > 1 ? argv[1] : "CITY";
 // look for longest params first
 if (/PARKINGLOT/i.test(modeArg))
     modeCreate = createMode.parkinglot
-else if (/JUSTSTEETS/i.test(modeArg))
+else if (/JUSTSTREETS/i.test(modeArg))
     modeCreate = createMode.juststreets;
 else if (/DIRTLOT/i.test(modeArg))
     modeCreate = createMode.dirtlot
@@ -136,9 +141,17 @@ else if (/PARK/i.test(modeArg))
 else
     modeCreate = createMode.Help;
 
+//var config = context.getConfiguration;
+//context.print(config);
+//context.print(config.scriptTimeout);
+
 // show help
 if (modeCreate == createMode.Help)
     context.print("Usage: " + argv[0] + " " + helpString);
+
+// check the timeout
+//else if (context.getConfiguration.scriptTimeout < 10000)
+//    context.print("ERROR: You need to increase your script timeout, see readme")
 
 // otherwise let's do something!
 else {
@@ -183,15 +196,20 @@ else {
         "BLACK_CLOTH": EncodeBlock(BlockID.CLOTH, 15)
     };
 
+    // stair direction
+    var Ascending_South = 0;
+    var Ascending_North = 1;
+    var Ascending_West = 2;
+    var Ascending_East = 3;
+
     // making room to create
     var arrayWidth = squaresWidth * squareBlocks;
     var arrayDepth = squaresLength * squareBlocks;
     var arrayHeight = belowGround + streetHeight + floorHeight * cityFloorCount + roofHeight;
     var blocks = new Array(arrayWidth);
     InitializeBlocks();
-
-    // make room for fixups and list out the known things we can fixup
-    var fixups = new Array();
+    InitializeFixups();
+    InitializeForests();
 
     // add plumbing level (based on Maze.js from WorldEdit)
     AddPlumbingLevel();
@@ -226,7 +244,8 @@ else {
     TranscribeBlocks(origin);
 
     // finally fix the things that need to be fixed up
-    FixupFixups(origin);
+    FinalizeFixups(origin);
+    FinalizeForests(origin);
 
     // poof, we are done!
     context.print("fini");
@@ -265,18 +284,27 @@ function InitializeBlocks() {
 // etch our array of ints into the "real" world
 function TranscribeBlocks(origin) {
     context.print("Transcribing");
-    var block;
+    var newblock;
+    var oldblock;
+    var id;
+    var data;
+    var at;
     for (x = 0; x < arrayWidth; x++)
         for (var y = 0; y < arrayHeight; y++)
             for (var z = 0; z < arrayDepth; z++) {
-                //context.print(x + " " + y + " " + z);
-                block = blocks[x][y][z];
-                editsess.rawSetBlock(origin.add(x, y, z),
-                                     new BaseBlock(block & 0xFF, block >> 8));
-                //editsess.rawSetBlock(origin.add(x, y - belowGround, z),
-                //                     new BaseBlock(blocks[x][y][z]));
-                //editsess.smartSetBlock(new Vector(x, y - belowGround, z), new BaseBlock(blocks[x][y][z]));
-                //editsess.SetBlock(new Vector(x, y - belowGround, z), new BaseBlock(blocks[x][y][z]));
+                
+                // decode the new block
+                newblock = blocks[x][y][z];
+                id = newblock & 0xFF;
+                data = newblock >> 8;
+
+                // what is already there?
+                at = origin.add(x, y, z);
+                oldblock = editsess.rawGetBlock(at);
+                if (oldblock.getType() != id || oldblock.getData() != data)
+
+                    // if it isn't the same then set it!
+                    editsess.rawSetBlock(at, new BaseBlock(id, data));
             }
 }
 
@@ -319,10 +347,16 @@ function FillStrataLevel(blockID, at) {
 }
 
 ////////////////////////////////////////////////////
-// fix up logic
+// fix up logic for blocks
 ////////////////////////////////////////////////////
 
-function FixupFixups(origin) {
+var fixups;
+
+function InitializeFixups() {
+    fixups = new Array();
+}
+
+function FinalizeFixups(origin) {
     for (i = 0; i < fixups.length; i++)
         fixups[i].setBlock(origin);
 }
@@ -344,12 +378,55 @@ function LateItem(atX, atY, atZ, id) {
 
         // late creation
         editsess.rawSetBlock(origin.add(this.blockX, this.blockY, this.blockZ),
-                               new BaseBlock(id, data));
+                             new BaseBlock(id, data));
 
         // fix up the top of the doors
         if (id == BlockID.WOODEN_DOOR)
             editsess.rawSetBlock(origin.add(this.blockX, this.blockY + 1, this.blockZ),
                                  new BaseBlock(id, data + 8));
+    }
+}
+
+////////////////////////////////////////////////////
+// fix up logic for forests
+////////////////////////////////////////////////////
+
+var forests;
+var tree;
+
+function InitializeForests() {
+    forests = new Array();
+    archTypeTree = new TreeGenerator(TreeGenerator.TreeType.TREE);
+}
+
+function FinalizeForests(origin) {
+    for (i = 0; i < forests.length; i++)
+        forests[i].generate(origin);
+}
+
+function SetLateForest(blockX, blockZ, sizeW, sizeL) {
+    forests.push(new Forest(blockX, blockZ, sizeW, sizeL));
+}
+
+function Forest(blockX, blockZ, sizeW, sizeL) {
+    this.minX = blockX;
+    this.minZ = blockZ;
+    this.maxX = blockX + sizeW;
+    this.maxZ = blockZ + sizeL;
+
+    this.generate = function (origin) {
+        var border = 3;
+        var spacing = 3;
+        var odds = 10;
+        for (var x = this.minX + border; x <= this.maxX - border; x = x + spacing)
+            for (var z = this.minZ + border; z <= this.maxZ - border; z = z + spacing)
+
+                // odds% of the time plant a tree
+                if (rand.nextInt(100) < odds &&
+                    editsess.rawGetBlock(origin.add(x, streetLevel + 1, z)).getType() == BlockID.GRASS)
+
+                    // do it
+                    archTypeTree.generate(editsess, origin.add(x, streetLevel + 2, z));
     }
 }
 
@@ -504,8 +581,10 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
                                 blockX + cellWidth - 1, streetLevel - 1, blockZ + cellLength - 1);
 
     // fill up reservoir with water
+    FillCube(BlockID.AIR, blockX + 1, 1, blockZ + 1,
+                          blockX + cellWidth - 2, 3, blockZ + cellLength - 2);
     FillCube(BlockID.WATER, blockX + 1, 1, blockZ + 1,
-                            blockX + cellWidth - 2, 4, blockZ + cellLength - 2);
+                            blockX + cellWidth - 2, rand.nextInt(4) + 1, blockZ + cellLength - 2);
 
     // pillars to hold things up
     for (var x = cornerWidth; x < cellWidth; x = x + cornerWidth)
@@ -529,6 +608,11 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     // add an access point to the reservoir
     blocks[blockX + 2][streetLevel + 1][blockZ + 1] = BlockID.LOG;
     blocks[blockX + 2][streetLevel][blockZ + 1] = BlockID.AIR;
+
+    blocks[blockX + 6][streetLevel - 6][blockZ + 1] = BlockID.SANDSTONE;
+    blocks[blockX + 5][streetLevel - 5][blockZ + 1] = BlockID.SANDSTONE;
+    blocks[blockX + 4][streetLevel - 4][blockZ + 1] = BlockID.SANDSTONE;
+
     blocks[blockX + 3][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
     blocks[blockX + 2][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
     blocks[blockX + 1][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
@@ -568,11 +652,7 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     blocks[fountainX + 2][streetLevel + 5][fountainZ + 2] = BlockID.WATER;
 
     // add some trees
-    //    for (var x = 2; x < cellWidth - 2; x++)
-    //        for (var z = 2; z < cellLength - 2; z++)
-    //            if (blocks[x][streetLevel + 1][z] == BlockID.GRASS && rand.nextInt(2) > 0)
-    //                FixupTree(x, streetLevel + 2, z);
-    //    PushTree(5, streetLevel + 1, 5);
+    SetLateForest(blockX, blockZ, cellWidth, cellLength);
 }
 
 function AddCitySquares() {
@@ -599,33 +679,60 @@ function AddCitySquares() {
     // work our way through the cells
     var sizeX = 1;
     var sizeZ = 1;
-    for (var atX = 0; atX < 3; atX++)
-        for (var atZ = 0; atZ < 3; atZ++)
+    for (var atX = 0; atX < 3; atX++) {
+        for (var atZ = 0; atZ < 3; atZ++) {
             if (!cells[atX][atZ]) { // nothing here yet.. build!
-                sizeX = 1;
-                sizeZ = 1;
+                sizeX = RandomBuildingSize(maxSize - atX);
+                sizeZ = RandomBuildingSize(maxSize - atZ);
 
-                // 33% of time see if a bigger building will fit
-                if (rand.nextInt(3) == 0) {
-                    sizeX = rand.nextInt(Math.max(1, maxSize - atX)) + 1;
-                    sizeZ = rand.nextInt(Math.max(1, maxSize - atZ)) + 1;
+                // is there really width for it?
+                for (var x = atX; x < atX + sizeX; x++)
+                    if (cells[x][atZ]) {
+                        sizeX = x - atX;
+                        break;
+                    }
+                
+                // is there really depth for it?
+                for (var x = atX; x < atX + sizeX; x++)
+                    for (var z = atZ; z < atZ + sizeZ; z++)
+                        if (cells[x][z]) {
+                            sizeZ = z - atZ;
+                            break;
+                        }
 
-                    // mark the cells
-                    for (var x = atX; x < atX + sizeX; x++)
-                        for (var z = atZ; z < atZ + sizeZ; z++)
-                            cells[x][z] = true;
-                }
-                else
-                    cells[atX][atZ] = true;
+                // mark the cells
+                for (var x = atX; x < atX + sizeX; x++) 
+                    for (var z = atZ; z < atZ + sizeZ; z++)
+                        cells[x][z] = true;
 
                 // make it so!
                 DrawBuildingOrParkCell(atX + 1, atZ + 1, sizeX, sizeZ);
             }
+        }
+    }
+
+    function RandomBuildingSize(maxSize) {
+        var chance = Math.random();
+        var size = rand.nextInt(Math.max(1, maxSize)) + 1;
+        switch (size) {
+            case 3: // 10% but only if 3
+                if (chance < 0.10)
+                    return 3;
+                // else fall to 2
+            case 2: // 40% but only if 2
+                if (chance < 0.50)
+                    return 2;
+                // else fall to 1
+            default: // 50% of the time
+                return 1;
+        }
+    }
 
     //======================================================
     function DrawBuildingOrParkCell(cellX, cellZ, cellW, cellL) {
+
         // little park instead of a building?
-        if (rand.nextInt(4) == 0 && parksAllowed > 0) {
+        if (rand.nextInt(6) == 0 && parksAllowed > 0) {
             DrawParkCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL)
             parksAllowed--;
         }
@@ -754,7 +861,7 @@ function AddCitySquares() {
                 wallID = ExtendedID.PURPLE_CLOTH;
                 edgingID = BlockID.GLASS;
                 floorID = ExtendedID.LIGHT_GRAY_CLOTH;
-                roofID = BlockID.GLASS;
+                //roofID = BlockID.GLASS;
                 break;
             case 22:
                 wallID = ExtendedID.DARK_GREEN_CLOTH;
@@ -783,7 +890,14 @@ function AddCitySquares() {
         // build the building
         for (var story = 0; story < (stories - roofTop); story++) {
             var floorAt = story * floorHeight + firstFloor + 1;
-            FillFloor(wallID, edgingID, floorID,
+
+            // what color is the wall?
+            var floorWallID = wallID;
+            if (story == 0 && edgingID != BlockID.GLASS && rand.nextInt(2) == 0)
+                floorWallID = edgingID;
+
+            // build the floor!
+            FillFloor(floorWallID, edgingID, floorID,
                       blockX + 1, floorAt, blockZ + 1,
                       blockX + cellWidth - 2, floorAt + floorHeight - 2, blockZ + cellLength - 2,
                       windowStyle, story, stories - roofTop - 1);
@@ -974,24 +1088,6 @@ function AddCitySquares() {
                 // and a door 
                 SetLateBlock(blockX - sewerHeight + 1, sewerFloor, blockZ + 2, ExtendedID.WESTFACING_WOODEN_DOOR);
             }
-        }
-    }
-
-    function RandomBuildingSize() {
-        switch (rand.nextInt(10)) {
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-                return 1; // 50%
-            case 5:
-            case 6:
-            case 7:
-            case 8:
-                return 2; // 40%
-            default:
-                return 3; // 10%
         }
     }
 }
