@@ -22,8 +22,8 @@ Warn people when timeout is too small, alas context.configuration does not seem 
 Need to figure out the height of the tallest legal block allowed by Minecraft given the player's location
 
 * Potential Upcoming Improvements
-Neighborhoods (4 lots to a square, houses with fenced backyards, driveway, garages
-Farms (tilled and planted gardens with irrigation systems, possibly underground irrigation? how about greenhouses?)
+FARMHOUSE - farm with a house
+HOUSES - 4 big cells of fenced yards and house (driveway, garage?)
 Ponds and canals (with bridges)
 Paint lines in the parking lot
 Instead of basements, Parking garages under 2x2 or larger buildings
@@ -33,11 +33,13 @@ Reduce the width/depth of building floors as they go up (empire state building s
 Skyscrapers (tallest building possible given the user's position)
 Improved slanted roofs (using steps) with overhangs
 Fancy fountians (multiple founts, rounder and scale up in larger parks)
+In smaller parks, have one big tree instead of a fountian
 
 * Ponder
 Interior room generator? 
 
 * Fixed
+Farms with wheat, suger cane, cactus, rose, dandelion, trees, pumpkins and empty plots
 No random buildings in buildings
 Trees in parks!
 Fixed the spelling of JUSTSTEETS

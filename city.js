@@ -23,8 +23,8 @@ Warn people when timeout is too small, alas context.configuration does not seem 
 Need to figure out the height of the tallest legal block allowed by Minecraft given the player's location
 
 * Potential Upcoming Improvements
-Neighborhoods (4 lots to a square, houses with fenced backyards, driveway, garages
-Farms (tilled and planted gardens with irrigation systems, possibly underground irrigation? how about greenhouses?)
+FARMHOUSE - farm with a house
+HOUSES - 4 big cells of fenced yards and house (driveway, garage?)
 Ponds and canals (with bridges)
 Paint lines in the parking lot
 Instead of basements, Parking garages under 2x2 or larger buildings
@@ -34,11 +34,13 @@ Reduce the width/depth of building floors as they go up (empire state building s
 Skyscrapers (tallest building possible given the user's position)
 Improved slanted roofs (using steps) with overhangs
 Fancy fountians (multiple founts, rounder and scale up in larger parks)
+In smaller parks, have one big tree instead of a fountian
 
 * Ponder
 Interior room generator? 
 
 * Fixed
+FARM w/wheat, suger cane, cactus, rose, dandelion, trees, pumpkins and empty plots
 No random buildings in buildings
 Trees in parks!
 Fixed the spelling of JUSTSTEETS
@@ -92,6 +94,7 @@ importPackage(Packages.com.sk89q.worldedit.util);
 
 // for future reference
 var editsess = context.remember();
+var world = editsess.getWorld();
 var session = context.getSession();
 var origin = player.getBlockIn();
 var rand = new java.util.Random();
@@ -117,36 +120,40 @@ var cityFloorCount = 10;
 var townFloorCount = 3;
 
 // what do you want to create
-var helpString = "[HELP | CITY | TOWN | PARK | DIRTLOT | PARKINGLOT | JUSTSTREETS]"
+var helpString = "[HELP | CITY | TOWN | PARK | DIRTLOT | PARKINGLOT | JUSTSTREETS | FARM]"
 context.checkArgs(0, -1, helpString);
 var modeCreate;
-var createMode = { "city": 0, "town": 1, "park": 2, "dirtlot": 3, "parkinglot": 4, "juststreets": 5, "help": -1 };
+var createMode = { "CITY": 0, "TOWN": 1, "PARK": 2, "DIRTLOT": 3, "PARKINGLOT": 4, "JUSTSTREETS": 5, "FARM": 6, "FARMHOUSE": 7, "HELP": -1 };
 var modeArg = argv.length > 1 ? argv[1] : "CITY";
 
 // look for longest params first
 if (/PARKINGLOT/i.test(modeArg))
-    modeCreate = createMode.parkinglot
+    modeCreate = createMode.PARKINGLOT
 else if (/JUSTSTREETS/i.test(modeArg))
-    modeCreate = createMode.juststreets;
+    modeCreate = createMode.JUSTSTREETS;
 else if (/DIRTLOT/i.test(modeArg))
-    modeCreate = createMode.dirtlot
+    modeCreate = createMode.DIRTLOT
+else if (/FARMHOUSE/i.test(modeArg))
+    modeCreate = createMode.FARMHOUSE
+else if (/FARM/i.test(modeArg))
+    modeCreate = createMode.FARM
 else if (/CITY/i.test(modeArg))
-    modeCreate = createMode.city
+    modeCreate = createMode.CITY
 else if (/TOWN/i.test(modeArg))
-    modeCreate = createMode.town
+    modeCreate = createMode.TOWN
 else if (/PARK/i.test(modeArg))
-    modeCreate = createMode.park
+    modeCreate = createMode.PARK
 
 // all else fails let's show some help
 else
-    modeCreate = createMode.Help;
+    modeCreate = createMode.HELP;
 
 //var config = context.getConfiguration;
 //context.print(config);
 //context.print(config.scriptTimeout);
 
 // show help
-if (modeCreate == createMode.Help)
+if (modeCreate == createMode.HELP)
     context.print("Usage: " + argv[0] + " " + helpString);
 
 // check the timeout
@@ -157,7 +164,7 @@ if (modeCreate == createMode.Help)
 else {
 
     // how big is everything?
-    var floorCount = modeCreate == createMode.city ? cityFloorCount : townFloorCount; // short or tall
+    var floorCount = modeCreate == createMode.CITY ? cityFloorCount : townFloorCount; // short or tall
     var squaresWidth = 5;
     var squaresLength = 5;
 
@@ -209,7 +216,7 @@ else {
     var blocks = new Array(arrayWidth);
     InitializeBlocks();
     InitializeFixups();
-    InitializeForests();
+    InitializeTrees();
 
     // add plumbing level (based on Maze.js from WorldEdit)
     AddPlumbingLevel();
@@ -219,33 +226,42 @@ else {
 
     // add the inside bits
     switch (modeCreate) {
-        case createMode.city:
-        case createMode.town:
+        case createMode.CITY:
+        case createMode.TOWN:
             AddCitySquares();
             break;
-        case createMode.park:
+        case createMode.PARK:
             AddParkLot();
             break;
-        case createMode.dirtlot:
+        case createMode.FARMHOUSE:
+        case createMode.FARM:
+            AddFarmLot();
+            break;
+        case createMode.DIRTLOT:
             AddDirtLot();
             break;
-        case createMode.parkinglot:
+        case createMode.PARKINGLOT:
             AddParkingLot();
             break;
-        default: // createMode.juststreets
+        default: // createMode.JUSTSTEETS
             AddJustStreets();
             break;
     }
 
-    // add access points (will modify the player offset correctly as well)
+    // add access points (will modify the player "origin" correctly as well)
     AddManholes();
 
     // and we are nearly done
-    TranscribeBlocks(origin);
+    TranscribeBlocks();
 
     // finally fix the things that need to be fixed up
-    FinalizeFixups(origin);
-    FinalizeForests(origin);
+    FinalizeFixups();
+    FinalizeTrees();
+
+    // clean up any left over detritus
+    world.removeEntities(EntityType.ITEMS,
+        origin.add(Math.floor(2.5 * squareBlocks), 0, Math.floor(2.5 * squareBlocks)), 
+        4 * squareBlocks);
 
     // poof, we are done!
     context.print("fini");
@@ -282,17 +298,17 @@ function InitializeBlocks() {
 }
 
 // etch our array of ints into the "real" world
-function TranscribeBlocks(origin) {
+function TranscribeBlocks() {
     context.print("Transcribing");
     var newblock;
     var oldblock;
     var id;
     var data;
     var at;
-    for (x = 0; x < arrayWidth; x++)
-        for (var y = 0; y < arrayHeight; y++)
+    for (x = 0; x < arrayWidth; x++) {
+        for (var y = 0; y < arrayHeight; y++) {
             for (var z = 0; z < arrayDepth; z++) {
-                
+
                 // decode the new block
                 newblock = blocks[x][y][z];
                 id = newblock & 0xFF;
@@ -301,11 +317,14 @@ function TranscribeBlocks(origin) {
                 // what is already there?
                 at = origin.add(x, y, z);
                 oldblock = editsess.rawGetBlock(at);
-                if (oldblock.getType() != id || oldblock.getData() != data)
+                if (oldblock.getType() != id || oldblock.getData() != data) {
 
                     // if it isn't the same then set it!
                     editsess.rawSetBlock(at, new BaseBlock(id, data));
+                }
             }
+        }
+    }
 }
 
 // need to standarize on one param style, these five are not consistent!
@@ -356,9 +375,12 @@ function InitializeFixups() {
     fixups = new Array();
 }
 
-function FinalizeFixups(origin) {
-    for (i = 0; i < fixups.length; i++)
-        fixups[i].setBlock(origin);
+function FinalizeFixups() {
+    if (fixups.length > 0) {
+        context.print("Placing special items");
+        for (i = 0; i < fixups.length; i++)
+            fixups[i].setBlock(origin);
+    }
 }
 
 function SetLateBlock(atX, atY, atZ, id) {
@@ -388,45 +410,51 @@ function LateItem(atX, atY, atZ, id) {
 }
 
 ////////////////////////////////////////////////////
-// fix up logic for forests
+// fix up logic for trees
 ////////////////////////////////////////////////////
 
-var forests;
-var tree;
+var trees;
+var archTypeTree;
 
-function InitializeForests() {
-    forests = new Array();
+function InitializeTrees() {
+    trees = new Array();
     archTypeTree = new TreeGenerator(TreeGenerator.TreeType.TREE);
 }
 
-function FinalizeForests(origin) {
-    for (i = 0; i < forests.length; i++)
-        forests[i].generate(origin);
+function FinalizeTrees() {
+    if (trees.length > 0) {
+        context.print("Growing some trees");
+        for (i = 0; i < trees.length; i++)
+            trees[i].generate(origin);
+    }
 }
 
 function SetLateForest(blockX, blockZ, sizeW, sizeL) {
-    forests.push(new Forest(blockX, blockZ, sizeW, sizeL));
+    var border = 3;
+    var spacing = 3;
+    var odds = 10;
+
+    for (var x = blockX + border; x <= blockX + sizeW - border; x = x + spacing)
+        for (var z = blockZ + border; z <= blockZ + sizeL - border; z = z + spacing) {
+
+            // odds% of the time plant a tree
+            if (rand.nextInt(100) < odds)
+                SetLateTree(x, streetLevel + 1, z);
+        }
 }
 
-function Forest(blockX, blockZ, sizeW, sizeL) {
-    this.minX = blockX;
-    this.minZ = blockZ;
-    this.maxX = blockX + sizeW;
-    this.maxZ = blockZ + sizeL;
+function SetLateTree(blockX, blockY, blockZ) {
+    trees.push(new Tree(blockX, blockY, blockZ));
+}
+
+function Tree(blockX, blockY, blockZ) {
+    this.atX = blockX;
+    this.atY = blockY;
+    this.atZ = blockZ;
 
     this.generate = function (origin) {
-        var border = 3;
-        var spacing = 3;
-        var odds = 10;
-        for (var x = this.minX + border; x <= this.maxX - border; x = x + spacing)
-            for (var z = this.minZ + border; z <= this.maxZ - border; z = z + spacing)
-
-                // odds% of the time plant a tree
-                if (rand.nextInt(100) < odds &&
-                    editsess.rawGetBlock(origin.add(x, streetLevel + 1, z)).getType() == BlockID.GRASS)
-
-                    // do it
-                    archTypeTree.generate(editsess, origin.add(x, streetLevel + 2, z));
+        if (editsess.rawGetBlock(origin.add(this.atX, this.atY, this.atZ)).getType() == BlockID.GRASS)
+            archTypeTree.generate(editsess, origin.add(this.atX, this.atY + 1, this.atZ));
     }
 }
 
@@ -509,33 +537,32 @@ function AddPlumbingLevel() {
             blocks[x * 2 + 1][1][z * 2 + 1] = BlockID.OBSIDIAN;
             blocks[x * 2 + 1][2][z * 2 + 1] = BlockID.OBSIDIAN;
 
-            switch (rand.nextInt(15)) {
+            switch (rand.nextInt(20)) {
                 case 0:
                 case 1:
+                    SetLateBlock(x * 2, 1, z * 2, BlockID.BROWN_MUSHROOM);
+                    break;
                 case 2:
                 case 3:
+                    SetLateBlock(x * 2, 1, z * 2, BlockID.RED_MUSHROOM);
+                    break;
                 case 4:
-                case 5:
-                case 6:  // 46.7%
-                    blocks[x * 2][1][z * 2] = BlockID.WATER;
-                    break;
-                case 7:
-                case 8:  // 13.3%
-                    blocks[x * 2][1][z * 2] = BlockID.BROWN_MUSHROOM;
-                    break;
-                case 9:
-                case 10: // 13.3%
-                    blocks[x * 2][1][z * 2] = BlockID.RED_MUSHROOM;
-                    break;
-
-                // what did people flush down the toilet?     
-                case 11: //  6.7%
                     blocks[x * 2][1][z * 2] = BlockID.GOLD_BLOCK;
                     break;
-                case 12: //  6.7%
+                case 5:
                     blocks[x * 2][1][z * 2] = BlockID.DIAMOND_BLOCK;
                     break;
-                default: // 13.3%
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                    blocks[x * 2][1][z * 2] = BlockID.WATER;
+                    break;
+                default:
                     break;
             }
         }
@@ -656,17 +683,18 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
 }
 
 function AddCitySquares() {
-    context.print("Building");
 
     // upper limits
     var maxSize = 3;
-    var parksAllowed = 1;
+    var maxParkSize = 1;
+    var sizeX = 1;
+    var sizeZ = 1;
 
     // if we are in a town then change them a bit
-    if (modeCreate == createMode.town){
+    if (modeCreate == createMode.TOWN) {
         maxSize = 2;
-        parksAllowed = 2;
-        }
+        maxParkSize = 2;
+    }
 
     // initialize the building cells
     var cells = new Array(3);
@@ -676,72 +704,61 @@ function AddCitySquares() {
             cells[x][z] = false;
     }
 
+    // does this block have a park?
+    if (modeCreate == createMode.TOWN || rand.nextInt(2) == 0) {
+        sizeX = RandomLotSize(maxParkSize);
+        sizeZ = RandomLotSize(maxParkSize);
+        var atX = rand.nextInt(maxSize - sizeX + 1);
+        var atZ = rand.nextInt(maxSize - sizeZ + 1);
+
+        // build the park then!
+        MarkLotUsed(atX, atZ, sizeX, sizeZ);
+        DrawParkCell((atX + 1) * squareBlocks, (atZ + 1) * squareBlocks,
+                     atX, atZ, sizeX, sizeZ);
+    }
+
     // work our way through the cells
-    var sizeX = 1;
-    var sizeZ = 1;
     for (var atX = 0; atX < 3; atX++) {
         for (var atZ = 0; atZ < 3; atZ++) {
             if (!cells[atX][atZ]) { // nothing here yet.. build!
-                sizeX = RandomBuildingSize(maxSize - atX);
-                sizeZ = RandomBuildingSize(maxSize - atZ);
+                sizeX = RandomLotSize(maxSize - atX);
+                sizeZ = RandomLotSize(maxSize - atZ);
 
                 // is there really width for it?
-                for (var x = atX; x < atX + sizeX; x++)
+                for (var x = atX; x < atX + sizeX; x++) {
                     if (cells[x][atZ]) {
                         sizeX = x - atX;
                         break;
                     }
-                
+                }
+
                 // is there really depth for it?
-                for (var x = atX; x < atX + sizeX; x++)
-                    for (var z = atZ; z < atZ + sizeZ; z++)
+                for (var x = atX; x < atX + sizeX; x++) {
+                    for (var z = atZ; z < atZ + sizeZ; z++) {
                         if (cells[x][z]) {
                             sizeZ = z - atZ;
                             break;
                         }
+                    }
+                }
 
                 // mark the cells
-                for (var x = atX; x < atX + sizeX; x++) 
-                    for (var z = atZ; z < atZ + sizeZ; z++)
-                        cells[x][z] = true;
+                MarkLotUsed(atX, atZ, sizeX, sizeZ);
 
                 // make it so!
-                DrawBuildingOrParkCell(atX + 1, atZ + 1, sizeX, sizeZ);
+                DrawBuildingCell((atX + 1) * squareBlocks, (atZ + 1) * squareBlocks,
+                                 atX, atZ, sizeX, sizeZ);
             }
         }
     }
 
-    function RandomBuildingSize(maxSize) {
-        var chance = Math.random();
-        var size = rand.nextInt(Math.max(1, maxSize)) + 1;
-        switch (size) {
-            case 3: // 10% but only if 3
-                if (chance < 0.10)
-                    return 3;
-                // else fall to 2
-            case 2: // 40% but only if 2
-                if (chance < 0.50)
-                    return 2;
-                // else fall to 1
-            default: // 50% of the time
-                return 1;
-        }
+    function MarkLotUsed(atX, atZ, sizeX, sizeZ) {
+        for (var x = atX; x < atX + sizeX; x++)
+            for (var z = atZ; z < atZ + sizeZ; z++)
+                cells[x][z] = true;
     }
 
     //======================================================
-    function DrawBuildingOrParkCell(cellX, cellZ, cellW, cellL) {
-
-        // little park instead of a building?
-        if (rand.nextInt(6) == 0 && parksAllowed > 0) {
-            DrawParkCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL)
-            parksAllowed--;
-        }
-
-        // fine.. be boring, let's make a building
-        else
-            DrawBuildingCell(cellX * squareBlocks, cellZ * squareBlocks, cellX, cellZ, cellW, cellL);
-    }
-
     function DrawBuildingCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
         var cellWidth = cellW * squareBlocks;
         var cellLength = cellL * squareBlocks;
@@ -820,7 +837,7 @@ function AddCitySquares() {
             case 13:
                 wallID = ExtendedID.GRAY_CLOTH;
                 edgingID = ExtendedID.PURPLE_CLOTH;
-                roofID = BlockID.GLASS;
+                //roofID = BlockID.GLASS;
                 break;
             case 14:
                 wallID = ExtendedID.LIGHT_GRAY_CLOTH;
@@ -1092,6 +1109,23 @@ function AddCitySquares() {
     }
 }
 
+function RandomLotSize(maxSize) {
+    var chance = Math.random();
+    var size = rand.nextInt(Math.max(1, maxSize)) + 1;
+    switch (size) {
+        case 3: // 10% but only if 3
+            if (chance < 0.10)
+                return 3;
+            // else fall to 2
+        case 2: // 40% but only if 2
+            if (chance < 0.50)
+                return 2;
+            // else fall to 1
+        default: // 50% of the time
+            return 1;
+    }
+}
+
 // streets or bridges over canals (one of these days)
 function AddStreets() {
     for (var x = 0; x < squaresWidth; x++)
@@ -1266,6 +1300,257 @@ function AddDirtLot() {
                            4 * squareBlocks - 1, streetLevel, 4 * squareBlocks - 1);
 }
 
+function AddFarmLot() {
+    FillCube(BlockID.DIRT, 1 * squareBlocks, sewerFloor, 1 * squareBlocks,
+                           4 * squareBlocks - 1, streetLevel, 4 * squareBlocks - 1);
+
+    // upper limits
+    var maxSize = 3;
+    var sizeX = 1;
+    var sizeZ = 1;
+
+    // initialize the building cells
+    var cells = new Array(3);
+    for (var x = 0; x < 3; x++) {
+        cells[x] = new Array(3);
+        for (var z = 0; z < 3; z++)
+            cells[x][z] = false;
+    }
+
+    // does this have a house?
+    if (modeCreate == createMode.FARMHOUSE) {
+        var atX = rand.nextInt(maxSize);
+        var atZ = rand.nextInt(maxSize);
+
+        // build the house
+        MarkLotUsed(atX, atZ, 1, 1);
+        //        DrawParkCell((atX + 1) * squareBlocks, (atZ + 1) * squareBlocks,
+        //                     atX, atZ, sizeX, sizeZ);
+    }
+
+    // work our way through the cells
+    for (var atX = 0; atX < 3; atX++) {
+        for (var atZ = 0; atZ < 3; atZ++) {
+            if (!cells[atX][atZ]) { // nothing here yet.. build!
+                sizeX = RandomLotSize(maxSize - atX);
+                sizeZ = RandomLotSize(maxSize - atZ);
+
+                // is there really width for it?
+                for (var x = atX; x < atX + sizeX; x++) {
+                    if (cells[x][atZ]) {
+                        sizeX = x - atX;
+                        break;
+                    }
+                }
+
+                // is there really depth for it?
+                for (var x = atX; x < atX + sizeX; x++) {
+                    for (var z = atZ; z < atZ + sizeZ; z++) {
+                        if (cells[x][z]) {
+                            sizeZ = z - atZ;
+                            break;
+                        }
+                    }
+                }
+
+                // mark the cells
+                MarkLotUsed(atX, atZ, sizeX, sizeZ);
+
+                // make it so!
+                DrawFarmCell((atX + 1) * squareBlocks, (atZ + 1) * squareBlocks,
+                             atX, atZ, sizeX, sizeZ);
+            }
+        }
+    }
+
+    function MarkLotUsed(atX, atZ, sizeX, sizeZ) {
+        for (var x = atX; x < atX + sizeX; x++)
+            for (var z = atZ; z < atZ + sizeZ; z++)
+                cells[x][z] = true;
+    }
+
+    //======================================================
+    function DrawFarmCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
+        var blockW = cellW * squareBlocks;
+        var blockL = cellL * squareBlocks;
+        var blockY = streetLevel + 1;
+        var bedType = rand.nextInt(18);
+        var nsOrient = rand.nextInt(2) == 0;
+
+        for (var x = 0; x < blockW; x++)
+            for (var z = 0; z < blockL; z++)
+                if (x == 0 || z == 0 || x == blockW - 1 || z == blockL - 1)
+                    blocks[x + blockX][blockY][z + blockZ] = BlockID.SOIL
+                else
+                    switch (bedType) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 8: // wheat
+                        if (nsOrient) {
+                            if (z % 2 == 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(BlockID.CROPS, rand.nextInt(5) + 3));
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        else {
+                            if (x % 2 == 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(BlockID.CROPS, rand.nextInt(5) + 3));
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        break;
+                    case 9: 
+                    case 10: // reeds
+                        if (nsOrient) {
+                            if (z % 2 == 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(BlockID.REED, 15));
+                                SetLateBlock(x + blockX, blockY + 2, z + blockZ, EncodeBlock(BlockID.REED, 15));
+                                if (rand.nextInt(2) == 0) {
+                                    SetLateBlock(x + blockX, blockY + 3, z + blockZ, EncodeBlock(BlockID.REED, 15));
+                                    if (rand.nextInt(2) == 0) {
+                                        SetLateBlock(x + blockX, blockY + 4, z + blockZ, EncodeBlock(BlockID.REED, 15));
+                                    }
+                                }
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        else {
+                            if (x % 2 == 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(BlockID.REED, 15));
+                                SetLateBlock(x + blockX, blockY + 2, z + blockZ, EncodeBlock(BlockID.REED, 15));
+                                if (rand.nextInt(2) == 0) {
+                                    SetLateBlock(x + blockX, blockY + 3, z + blockZ, EncodeBlock(BlockID.REED, 15));
+                                    if (rand.nextInt(2) == 0) {
+                                        SetLateBlock(x + blockX, blockY + 4, z + blockZ, EncodeBlock(BlockID.REED, 15));
+                                    }
+                                }
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        break;
+                    case 11: // cactus
+                        blocks[x + blockX][blockY][z + blockZ] = BlockID.SAND;
+                        //if ((x % 2 == 0 && z % 2 == 1) || (x % 2 == 1) && (z % 2 == 0)) {
+                        if (x % 2 == 0 && z % 2 == 1) {
+                            SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(BlockID.CACTUS, 15));
+                            if (rand.nextInt(2) == 0) {
+                                SetLateBlock(x + blockX, blockY + 2, z + blockZ, EncodeBlock(BlockID.CACTUS, 15));
+                                if (rand.nextInt(2) == 0) {
+                                    SetLateBlock(x + blockX, blockY + 3, z + blockZ, EncodeBlock(BlockID.CACTUS, 15));
+                                }
+                            }
+                        }
+                        break;
+                    case 12: // roses
+                        blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                        SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.RED_FLOWER);
+                        break;
+                    case 13: // dandelion 
+                        blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                        SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.YELLOW_FLOWER);
+                        break;
+                    case 14: // random roses and dandelions
+                        if (nsOrient) {
+                            if (z % 2 == 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                                if (rand.nextInt(2) == 0)
+                                    SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.RED_FLOWER)
+                                else
+                                    SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.YELLOW_FLOWER);
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        else {
+                            if (x % 2 == 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                                if (rand.nextInt(2) == 0)
+                                    SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.RED_FLOWER)
+                                else
+                                    SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.YELLOW_FLOWER);
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        break;
+                    case 15: // trees
+                        blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                        if (x % 5 == 2 && z % 5 == 2)
+                            SetLateTree(x + blockX, blockY, z + blockZ);
+                        break;
+                    case 16: // pumpkins
+                        blocks[x + blockX][blockY][z + blockZ] = BlockID.DIRT;
+                        if (x % 5 == 2 && z % 5 == 2) {
+                            blocks[x + blockX][blockY][z + blockZ] = BlockID.LOG;
+                            blocks[x + blockX][blockY + 1][z + blockZ] = BlockID.LEAVES;
+                        }
+                        if (nsOrient) {
+                            if (z % 5 == 2) {
+                                blocks[x + blockX][blockY + 1][z + blockZ] = BlockID.LEAVES;
+
+                                if (rand.nextInt(2) == 0)
+                                    if (rand.nextInt(5) == 0)
+                                        blocks[x + blockX][blockY + 1][z + blockZ - 1] = BlockID.PUMPKIN
+                                    else
+                                        blocks[x + blockX][blockY + 1][z + blockZ - 1] = BlockID.LEAVES;
+
+                                if (rand.nextInt(2) == 0)
+                                    if (rand.nextInt(5) == 0)
+                                        blocks[x + blockX][blockY + 1][z + blockZ + 1] = BlockID.PUMPKIN
+                                    else
+                                        blocks[x + blockX][blockY + 1][z + blockZ + 1] = BlockID.LEAVES;
+
+                                if (rand.nextInt(3) == 0)
+                                    blocks[x + blockX][blockY + 2][z + blockZ] = BlockID.LEAVES;
+                            }
+                        }
+                        else {
+                            if (x % 5 == 2) {
+                                blocks[x + blockX][blockY + 1][z + blockZ] = BlockID.LEAVES;
+
+                                if (rand.nextInt(2) == 0)
+                                    if (rand.nextInt(5) == 0)
+                                        blocks[x + blockX - 1][blockY + 1][z + blockZ] = BlockID.PUMPKIN
+                                    else
+                                        blocks[x + blockX - 1][blockY + 1][z + blockZ] = BlockID.LEAVES;
+
+                                if (rand.nextInt(2) == 0)
+                                    if (rand.nextInt(5) == 0)
+                                        blocks[x + blockX + 1][blockY + 1][z + blockZ] = BlockID.PUMPKIN
+                                    else
+                                        blocks[x + blockX + 1][blockY + 1][z + blockZ] = BlockID.LEAVES;
+
+                                if (rand.nextInt(3) == 0)
+                                    blocks[x + blockX][blockY + 2][z + blockZ] = BlockID.LEAVES;
+                            }
+                        }
+                        break;
+                    default: // unplanted rows
+                        if (nsOrient) {
+                            if (z % 2 == 0)
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                            else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        else {
+                            if (x % 2 == 0)
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                            else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        break;
+                }
+    }
+}
+
 function AddParkingLot() {
     FillCube(BlockID.DIRT, 1 * squareBlocks, sewerFloor, 1 * squareBlocks,
                            4 * squareBlocks - 1, streetLevel - 1, 4 * squareBlocks - 1);
@@ -1274,7 +1559,8 @@ function AddParkingLot() {
 }
 
 function AddJustStreets() {
-    // let see if we can literally do nothing... hey it worked!
+    // let see if we can literally do nothing... 
+    // ...hey it worked!
 }
 
 function AddManholes() {
@@ -1287,7 +1573,7 @@ function AddManholes() {
     AddSewerManhole(manX + 4 * squareBlocks, belowGround, manZ + 0 * squareBlocks);
     AddSewerManhole(manX + 4 * squareBlocks, belowGround, manZ + 4 * squareBlocks);
 
-    // offset the start so we are standing on the SE manhole
+    // offset the start so we are standing on the SW manhole
     origin = origin.add(-manX, -belowGround, -manZ);
 
     //======================================================
