@@ -110,7 +110,7 @@ var floorHeight = 4;
 var roofHeight = 1; // extra bit for roof fluff like railings
 
 // say hello!
-context.print(argv[0] + " v1.0");
+context.print(argv[0] + " v1.0a");
 
 // see if we can find the offset
 if (!FindOriginOffset()) {
@@ -123,7 +123,7 @@ if (!FindOriginOffset()) {
     // if not tell the user what happened
     } else {
         context.print("ERROR: Cannot find the crossroads.");
-        context.print(" Either walk to a crosswalk or...")
+        context.print(" Either walk to a crossroad or...")
         context.print(" use FIRSTTIME option to force creation from this spot.");
         modeCreate = createMode.HELP;
     }
