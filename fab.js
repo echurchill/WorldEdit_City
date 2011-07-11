@@ -1,5 +1,5 @@
 // $Id$
-/***** BUILD.JS v1.0
+/***** FAB.JS v1.0
 * City block generator CraftScript for WorldEdit
 * (parts of this is based on WorldEdit's sample Maze generator)
 * Copyright (C) 2011 echurch <http://www.virtualchurchill.com>

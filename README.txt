@@ -1,4 +1,4 @@
-/***** BUILD.JS v1.0
+/***** FAB.JS v1.0
 * City block generator CraftScript for WorldEdit
 * (parts of this is based on WorldEdit's sample Maze generator)
 * Copyright (C) 2011 echurch <http://www.virtualchurchill.com>
@@ -18,8 +18,8 @@
 
 *****************************************
 * Command line options
-/Build.js [..city block option..] [HELP] [RANDOM] [FIRSTTIME]
-  Build again on this spot using the location's natural random seed, this can be overridden
+/Fab.js [..city block option..] [HELP] [RANDOM] [FIRSTTIME]
+  Fabricate again on this spot using the location's natural random seed, this can be overridden
   Each city block built uses a random seed based on it's XYZ location
 
 >>city block options..
