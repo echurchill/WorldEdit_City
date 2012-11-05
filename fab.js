@@ -94,6 +94,8 @@ for (var i = 1; i < argv.length; i++) {
 
     else if (/HELP/i.test(arg))
         modeCreate = createMode.HELP;
+    else if (/\?/.test(arg))
+        modeCreate = createMode.HELP;
 }
 
 //var config = context.getConfiguration;
