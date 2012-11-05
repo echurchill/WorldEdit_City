@@ -39,7 +39,7 @@ var blocksTotal = 0;
 var blocksSet = 0;
 
 // what do you want to create
-var helpString = "[HIGHRISE | MIDRISE | LOWRISE | TOWN | PARK | DIRTLOT | PARKINGLOT | JUSTSTREETS | FARM | FARMHOUSE | HOUSES] [HELP] [RANDOM] [FIRSTTIME]"
+var helpString = "[HIGHRISE | MIDRISE | LOWRISE | TOWN | PARK | DIRTLOT | PARKINGLOT | JUSTSTREETS | FARM | FARMHOUSE | HOUSES] [HELP] [RANDOM] [FIRSTTIME] [NOUNDO]"
 context.checkArgs(0, -1, helpString);
 var createMode = { "HIGHRISE": 0, "MIDRISE": 1, "LOWRISE": 2, "TOWN": 3,
     "PARK": 4, "DIRTLOT": 5, "PARKINGLOT": 6, "JUSTSTREETS": 7,
@@ -53,6 +53,7 @@ var offsetX = 0;
 var offsetZ = 0;
 var randSeed = false;
 var firstTime = false;
+var noundo = false;
 
 // parse those args! last create mode wins!
 for (var i = 1; i < argv.length; i++) {
@@ -87,6 +88,9 @@ for (var i = 1; i < argv.length; i++) {
 
     else if (/FIRSTTIME/i.test(arg))      
         firstTime = true
+
+    else if (/NOUN/i.test(arg))
+        noundo = true
 
     else if (/HELP/i.test(arg))
         modeCreate = createMode.HELP;
@@ -393,7 +397,10 @@ function SetBlockIfNeeded(at, blockID, blockData, force) {
 
         // do force our way or only do so if there is air there?
         if (force || oldID == BlockID.AIR) {
-            editsess.rawSetBlock(at, new BaseBlock(blockID, blockData));
+            if (noundo)
+                editsess.rawSetBlock(at, new BaseBlock(blockID, blockData));
+            else
+                editsess.setBlock(at, new BaseBlock(blockID, blockData));
             blocksSet++;
         }
     }
