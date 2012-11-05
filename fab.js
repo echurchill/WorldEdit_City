@@ -39,7 +39,7 @@ var blocksTotal = 0;
 var blocksSet = 0;
 
 // what do you want to create
-var helpString = "[HIGHRISE | MIDRISE | LOWRISE | TOWN | PARK | DIRTLOT | PARKINGLOT | JUSTSTREETS | FARM | FARMHOUSE | HOUSES] [HELP] [RANDOM] [FIRSTTIME]"
+var helpString = "[HIGHRISE | MIDRISE | LOWRISE | TOWN | PARK | DIRTLOT | PARKINGLOT | JUSTSTREETS | FARM | FARMHOUSE | HOUSES] [HELP] [RANDOM] [FIRSTTIME] [NOUNDO]"
 context.checkArgs(0, -1, helpString);
 var createMode = { "HIGHRISE": 0, "MIDRISE": 1, "LOWRISE": 2, "TOWN": 3,
     "PARK": 4, "DIRTLOT": 5, "PARKINGLOT": 6, "JUSTSTREETS": 7,
@@ -53,6 +53,7 @@ var offsetX = 0;
 var offsetZ = 0;
 var randSeed = false;
 var firstTime = false;
+var noundo = false;
 
 // parse those args! last create mode wins!
 for (var i = 1; i < argv.length; i++) {
@@ -88,7 +89,12 @@ for (var i = 1; i < argv.length; i++) {
     else if (/FIRSTTIME/i.test(arg))      
         firstTime = true
 
+    else if (/NOUN/i.test(arg))
+        noundo = true
+
     else if (/HELP/i.test(arg))
+        modeCreate = createMode.HELP;
+    else if (/\?/.test(arg))
         modeCreate = createMode.HELP;
 }
 
@@ -393,7 +399,10 @@ function SetBlockIfNeeded(at, blockID, blockData, force) {
 
         // do force our way or only do so if there is air there?
         if (force || oldID == BlockID.AIR) {
-            editsess.rawSetBlock(at, new BaseBlock(blockID, blockData));
+            if (noundo)
+                editsess.rawSetBlock(at, new BaseBlock(blockID, blockData));
+            else
+                editsess.setBlock(at, new BaseBlock(blockID, blockData));
             blocksSet++;
         }
     }
@@ -2038,7 +2047,7 @@ function AddFarmAndHousesLot() {
 
     function DrawFarmCell(blockX, blockZ, cellX, cellZ, blockW, blockL) {
         var blockY = streetLevel + 1;
-        var bedType = rand.nextInt(18);
+        var bedType = rand.nextInt(22);
         var nsOrient = OneInTwoChance();
 
         for (var x = 0; x < blockW; x++)
@@ -2054,6 +2063,21 @@ function AddFarmAndHousesLot() {
                     case 4:
                     case 5:
                     case 6:
+                        if (nsOrient) {
+                            if (z % 4 > 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(BlockID.CROPS, rand.nextInt(5) + 3));
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        else {
+                            if (x % 4 > 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(BlockID.CROPS, rand.nextInt(5) + 3));
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        break;
                     case 7:
                     case 8: // wheat
                         if (nsOrient) {
@@ -2194,6 +2218,40 @@ function AddFarmAndHousesLot() {
                                 if (OneInThreeChance())
                                     blocks[x + blockX][blockY + 2][z + blockZ] = BlockID.LEAVES;
                             }
+                        }
+                        break;
+                    case 17:
+                    case 18: // Carrot
+                        if (nsOrient) {
+                            if (z % 4 > 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(141, rand.nextInt(5) + 3));
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        else {
+                            if (x % 4 > 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(141, rand.nextInt(5) + 3));
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        break;
+                    case 19:
+                    case 20: // Potato
+                        if (nsOrient) {
+                            if (z % 4 > 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(142, rand.nextInt(5) + 3));
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
+                        }
+                        else {
+                            if (x % 4 > 0) {
+                                blocks[x + blockX][blockY][z + blockZ] = EncodeBlock(BlockID.SOIL, 8);
+                                SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(142, rand.nextInt(5) + 3));
+                            } else
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.WATER;
                         }
                         break;
                     default: // unplanted rows
