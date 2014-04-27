@@ -451,6 +451,9 @@ function FindOriginOffset() {
                 case BlockID.BRICK:
                 case BlockID.SANDSTONE:
                 case BlockID.QUARTZ_BLOCK:
+                case BlockID.LOG:
+                case BlockID.WOOD:
+                case BlockID.COBBLESTONE:  
                 case BlockID.LADDER: 
                 case BlockID.AIR: // just in case a creeper exploded nearby
                     return deltaKeepLooking;
