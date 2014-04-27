@@ -1,5 +1,5 @@
 // start file for LOG street layouts and themes
-// screenshot https://minecraftgods.com/?p=119  need screen shot for stonebrick
+// screenshot https://minecraftgods.com/?p=123
 // $Id$
 /***** FAB.JS v1.0
 * City block generator CraftScript for WorldEdit
