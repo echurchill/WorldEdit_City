@@ -1,5 +1,5 @@
 // start file for LOG street layouts and themes
-// screenshot https://minecraftgods.com/?p=120  screenshot for mossy, need one for cobblestone
+// screenshot https://minecraftgods.com/?p=124
 // $Id$
 /***** FAB.JS v1.0
 * City block generator CraftScript for WorldEdit
