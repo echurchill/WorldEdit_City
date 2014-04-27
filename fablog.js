@@ -856,7 +856,7 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
             }
 
     // cap it off
-    FillCellLayer(BlockID.SANDSTONE, blockX, blockZ, streetLevel, cellW, cellL);
+    FillCellLayer(BlockID.WOOD, blockX, blockZ, streetLevel, cellW, cellL);
 
     // add some grass
     FillCellLayer(BlockID.GRASS, blockX, blockZ, streetLevel + 1, cellW, cellL);
@@ -867,16 +867,16 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     blocks[blockX + 5][streetLevel - 4][blockZ + 1] = BlockID.WOOD;
 
     // platform for access point
-    blocks[blockX + 4][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 3][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 2][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 1][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
+    blocks[blockX + 4][streetLevel - 3][blockZ + 1] = BlockID.WOOD;
+    blocks[blockX + 3][streetLevel - 3][blockZ + 1] = BlockID.WOOD;
+    blocks[blockX + 2][streetLevel - 3][blockZ + 1] = BlockID.WOOD;
+    blocks[blockX + 1][streetLevel - 3][blockZ + 1] = BlockID.WOOD;
 
     // backfill the wall behind the ladders
-    blocks[blockX + 2][streetLevel - 2][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 1][streetLevel - 2][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 2][streetLevel - 1][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 1][streetLevel - 1][blockZ + 1] = BlockID.SANDSTONE;
+    blocks[blockX + 2][streetLevel - 2][blockZ + 1] = BlockID.WOOD;
+    blocks[blockX + 1][streetLevel - 2][blockZ + 1] = BlockID.WOOD;
+    blocks[blockX + 2][streetLevel - 1][blockZ + 1] = BlockID.WOOD;
+    blocks[blockX + 1][streetLevel - 1][blockZ + 1] = BlockID.WOOD;
 
     // and now the ladders and trapdoor
     SetLateBlock(blockX + 3, streetLevel + 1, blockZ + 1, ExtendedID.SOUTHWARD_LADDER);
@@ -891,12 +891,12 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
 
         // simple columns
         if (x == fenceHole || x == cellWidth - fenceHole - 1) {
-            blocks[blockX + x][streetLevel + 2][blockZ] = BlockID.SAND;
-            blocks[blockX + x][streetLevel + 2][blockZ + cellLength - 1] = BlockID.SAND;
-            blocks[blockX + x][streetLevel + 3][blockZ] = BlockID.SANDSTONE;
+            blocks[blockX + x][streetLevel + 2][blockZ] = BlockID.WOOD;
+            blocks[blockX + x][streetLevel + 2][blockZ + cellLength - 1] = BlockID.WOOD;
+            blocks[blockX + x][streetLevel + 3][blockZ] = BlockID.WOOD;
             blocks[blockX + x][streetLevel + 3][blockZ + cellLength - 1] = BlockID.WOOD;
             blocks[blockX + x][streetLevel + 4][blockZ] = ExtendedID.SANDSTONE_STEP;
-            blocks[blockX + x][streetLevel + 4][blockZ + cellLength - 1] = ExtendedID.SANDSTONE_STEP;
+            blocks[blockX + x][streetLevel + 4][blockZ + cellLength - 1] = ExtendedID.WOODEN_STEP;
 
             // fence itself
         } else if (x > fenceHole && x < cellWidth - fenceHole) {
@@ -908,12 +908,12 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     // another fence along the other axis
     for (var z = 0; z < cellLength; z++) {
         if (z == fenceHole || z == cellLength - fenceHole - 1) {
-            blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.SAND;
-            blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.SAND;
-            blocks[blockX][streetLevel + 3][blockZ + z] = BlockID.SANDSTONE;
-            blocks[blockX + cellWidth - 1][streetLevel + 3][blockZ + z] = BlockID.SANDSTONE;
-            blocks[blockX][streetLevel + 4][blockZ + z] = ExtendedID.SANDSTONE_STEP;
-            blocks[blockX + cellWidth - 1][streetLevel + 4][blockZ + z] = ExtendedID.SANDSTONE_STEP;
+            blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.WOOD;
+            blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.WOOD;
+            blocks[blockX][streetLevel + 3][blockZ + z] = BlockID.WOOD;
+            blocks[blockX + cellWidth - 1][streetLevel + 3][blockZ + z] = BlockID.WOOD;
+            blocks[blockX][streetLevel + 4][blockZ + z] = ExtendedID.WOODEN_STEP;
+            blocks[blockX + cellWidth - 1][streetLevel + 4][blockZ + z] = ExtendedID.WOODEN_STEP;
         } else if (z > fenceHole && z < cellLength - fenceHole) {
             blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.FENCE;
             blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.FENCE;
@@ -1871,7 +1871,7 @@ function DrawStreetlight(blockX, blockY, blockZ, lightN, lightE, lightS, lightW)
     blocks[blockX][blockY + 2][blockZ] = BlockID.FENCE;
     blocks[blockX][blockY + 3][blockZ] = BlockID.FENCE;
     blocks[blockX][blockY + 4][blockZ] = BlockID.FENCE;
-    blocks[blockX][blockY + 5][blockZ] = BlockID.STEP;
+    blocks[blockX][blockY + 5][blockZ] = BlockID.WOODEN_STEP;
 
     if (lightN)
         blocks[blockX + 1][blockY + 5][blockZ] = BlockID.LIGHTSTONE;
@@ -2293,7 +2293,7 @@ function AddParkingLot() {
     switch (rand.nextInt(3)) {
         case 0:
             {
-                floorID = BlockID.SANDSTONE;
+                floorID = BlockID.WOOD;
                 ceilingID = ExtendedID.YELLOW_CLOTH;
                 paintID = ExtendedID.GRAY_CLOTH;
                 ramp1ID = ExtendedID.SANDSTONE_STEP;
