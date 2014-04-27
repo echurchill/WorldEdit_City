@@ -448,6 +448,9 @@ function FindOriginOffset() {
                 case BlockID.CLOTH:
                     return value;
                 case BlockID.STONE:
+                case BlockID.BRICK:
+                case BlockID.SANDSTONE:
+                case BlockID.QUARTZ:
                 case BlockID.LADDER: 
                 case BlockID.AIR: // just in case a creeper exploded nearby
                     return deltaKeepLooking;
@@ -857,9 +860,9 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     FillCellLayer(BlockID.GRASS, blockX, blockZ, streetLevel + 1, cellW, cellL);
 
     // steps up to access point
-    blocks[blockX + 7][streetLevel - 6][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 6][streetLevel - 5][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 5][streetLevel - 4][blockZ + 1] = BlockID.SANDSTONE;
+    blocks[blockX + 7][streetLevel - 6][blockZ + 1] = BlockID.BRICK;
+    blocks[blockX + 6][streetLevel - 5][blockZ + 1] = BlockID.BRICK;
+    blocks[blockX + 5][streetLevel - 4][blockZ + 1] = BlockID.BRICK;
 
     // platform for access point
     blocks[blockX + 4][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
@@ -889,7 +892,7 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
             blocks[blockX + x][streetLevel + 2][blockZ] = BlockID.SAND;
             blocks[blockX + x][streetLevel + 2][blockZ + cellLength - 1] = BlockID.SAND;
             blocks[blockX + x][streetLevel + 3][blockZ] = BlockID.SANDSTONE;
-            blocks[blockX + x][streetLevel + 3][blockZ + cellLength - 1] = BlockID.SANDSTONE;
+            blocks[blockX + x][streetLevel + 3][blockZ + cellLength - 1] = BlockID.BRICK;
             blocks[blockX + x][streetLevel + 4][blockZ] = ExtendedID.SANDSTONE_STEP;
             blocks[blockX + x][streetLevel + 4][blockZ + cellLength - 1] = ExtendedID.SANDSTONE_STEP;
 
@@ -1640,8 +1643,8 @@ function AddStreets() {
         }
 
         // add the street
-        FillCellLayer(BlockID.STONE, blockX, blockZ, streetLevel - 1, 1, 1);
-        FillCellLayer(BlockID.STONE, blockX, blockZ, streetLevel, 1, 1);
+        FillCellLayer(BlockID.BRICK, blockX, blockZ, streetLevel - 1, 1, 1);
+        FillCellLayer(BlockID.BRICK, blockX, blockZ, streetLevel, 1, 1);
 
         // add the sidewalk and streetlights
         var sidewalkY = streetLevel + 1;
@@ -1861,7 +1864,7 @@ function AddStreets() {
 }
 
 function DrawStreetlight(blockX, blockY, blockZ, lightN, lightE, lightS, lightW) {
-    blocks[blockX][blockY][blockZ] = BlockID.IRON_BLOCK;
+    blocks[blockX][blockY][blockZ] = BlockID.BRICK;
     blocks[blockX][blockY + 1][blockZ] = BlockID.FENCE;
     blocks[blockX][blockY + 2][blockZ] = BlockID.FENCE;
     blocks[blockX][blockY + 3][blockZ] = BlockID.FENCE;
@@ -2278,7 +2281,7 @@ function AddParkingLot() {
 
     // set up the default set of materials
     var lightID = BlockID.LIGHTSTONE;
-    var floorID = BlockID.STONE;
+    var floorID = BlockID.BRICK;
     var ceilingID = BlockID.IRON_BLOCK;
     var paintID = ExtendedID.WHITE_CLOTH;
     var ramp1ID = ExtendedID.STONE_STEP;
