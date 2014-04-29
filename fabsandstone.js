@@ -1,3 +1,5 @@
+// start file for LOG street layouts and themes
+// screenshot https://minecraftgods.com/?p=121 did not add the random catcus, kept fountain
 // $Id$
 /***** FAB.JS v1.0
 * City block generator CraftScript for WorldEdit
@@ -16,6 +18,10 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
+* 
+* Street styles created by Shawn E Carter - http://ShawnsSpace.com / https://NewsByShawn.com / https://MinecraftGods.com
+* To contact for questions or comments follow me on Facebook at https://facebook.com/ShawnsSpace
+* Thank you!
 */
 
 importPackage(Packages.java.io);
@@ -618,7 +624,7 @@ function Tree(blockX, blockY, blockZ, bigTree) {
     this.big = bigTree;
 
     this.generate = function (origin) {
-        if (editsess.rawGetBlock(origin.add(this.atX, this.atY, this.atZ)).getType() == BlockID.GRASS)
+        if (editsess.rawGetBlock(origin.add(this.atX, this.atY, this.atZ)).getType() == BlockID.SAND)
             if (this.big)
                 archTypeBigTree.generate(editsess, origin.add(this.atX, this.atY + 1, this.atZ))
             else
@@ -862,8 +868,8 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     // cap it off
     FillCellLayer(BlockID.SANDSTONE, blockX, blockZ, streetLevel, cellW, cellL);
 
-    // add some grass
-    FillCellLayer(BlockID.GRASS, blockX, blockZ, streetLevel + 1, cellW, cellL);
+    // add some SAND
+    FillCellLayer(BlockID.SAND, blockX, blockZ, streetLevel + 1, cellW, cellL);
 
     // steps up to access point
     blocks[blockX + 7][streetLevel - 6][blockZ + 1] = BlockID.SANDSTONE;
@@ -895,12 +901,12 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
 
         // simple columns
         if (x == fenceHole || x == cellWidth - fenceHole - 1) {
-            blocks[blockX + x][streetLevel + 2][blockZ] = BlockID.SAND;
-            blocks[blockX + x][streetLevel + 2][blockZ + cellLength - 1] = BlockID.SAND;
+            blocks[blockX + x][streetLevel + 2][blockZ] = BlockID.SANDSTONE;
+            blocks[blockX + x][streetLevel + 2][blockZ + cellLength - 1] = BlockID.SANDSTONE;
             blocks[blockX + x][streetLevel + 3][blockZ] = BlockID.SANDSTONE;
             blocks[blockX + x][streetLevel + 3][blockZ + cellLength - 1] = BlockID.SANDSTONE;
             blocks[blockX + x][streetLevel + 4][blockZ] = ExtendedID.SANDSTONE_STEP;
-            blocks[blockX + x][streetLevel + 4][blockZ + cellLength - 1] = ExtendedID.SANDSTONE_STEP;
+            blocks[blockX + x][streetLevel + 4][blockZ + cellLength - 1] = ExtendedID.WOODEN_STEP;
 
             // fence itself
         } else if (x > fenceHole && x < cellWidth - fenceHole) {
@@ -912,12 +918,12 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
     // another fence along the other axis
     for (var z = 0; z < cellLength; z++) {
         if (z == fenceHole || z == cellLength - fenceHole - 1) {
-            blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.SAND;
-            blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.SAND;
+            blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.SANDSTONE;
+            blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.SANDSTONE;
             blocks[blockX][streetLevel + 3][blockZ + z] = BlockID.SANDSTONE;
             blocks[blockX + cellWidth - 1][streetLevel + 3][blockZ + z] = BlockID.SANDSTONE;
-            blocks[blockX][streetLevel + 4][blockZ + z] = ExtendedID.SANDSTONE_STEP;
-            blocks[blockX + cellWidth - 1][streetLevel + 4][blockZ + z] = ExtendedID.SANDSTONE_STEP;
+            blocks[blockX][streetLevel + 4][blockZ + z] = ExtendedID.WOODEN_STEP;
+            blocks[blockX + cellWidth - 1][streetLevel + 4][blockZ + z] = ExtendedID.STEP;
         } else if (z > fenceHole && z < cellLength - fenceHole) {
             blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.FENCE;
             blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.FENCE;
@@ -1649,8 +1655,8 @@ function AddStreets() {
         }
 
         // add the street
-        FillCellLayer(BlockID.STONE, blockX, blockZ, streetLevel - 1, 1, 1);
-        FillCellLayer(BlockID.STONE, blockX, blockZ, streetLevel, 1, 1);
+        FillCellLayer(BlockID.SANDSTONE, blockX, blockZ, streetLevel - 1, 1, 1);
+        FillCellLayer(BlockID.SANDSTONE, blockX, blockZ, streetLevel, 1, 1);
 
         // add the sidewalk and streetlights
         var sidewalkY = streetLevel + 1;
@@ -1870,7 +1876,7 @@ function AddStreets() {
 }
 
 function DrawStreetlight(blockX, blockY, blockZ, lightN, lightE, lightS, lightW) {
-    blocks[blockX][blockY][blockZ] = BlockID.IRON_BLOCK;
+    blocks[blockX][blockY][blockZ] = BlockID.SANDSTONE;
     blocks[blockX][blockY + 1][blockZ] = BlockID.FENCE;
     blocks[blockX][blockY + 2][blockZ] = BlockID.FENCE;
     blocks[blockX][blockY + 3][blockZ] = BlockID.FENCE;
@@ -1901,8 +1907,8 @@ function AddFarmAndHousesLot() {
                            4 * squareBlocks - 1, streetLevel, 4 * squareBlocks - 1);
 
     for (var at = 0; at < squareBlocks * 3; at++) {
-        blocks[squareBlocks + at][streetLevel + 1][squareBlocks + lotBlocks] = BlockID.GRASS;
-        blocks[squareBlocks + lotBlocks][streetLevel + 1][squareBlocks + at] = BlockID.GRASS;
+        blocks[squareBlocks + at][streetLevel + 1][squareBlocks + lotBlocks] = BlockID.SAND;
+        blocks[squareBlocks + lotBlocks][streetLevel + 1][squareBlocks + at] = BlockID.SAND;
         if (at < lotBlocks - 2 || at > lotBlocks + 2) {
             blocks[squareBlocks + at][streetLevel + 2][squareBlocks + lotBlocks] = BlockID.FENCE;
             blocks[squareBlocks + lotBlocks][streetLevel + 2][squareBlocks + at] = BlockID.FENCE;
@@ -1940,7 +1946,7 @@ function AddFarmAndHousesLot() {
         var blockY = streetLevel + 1;
 
         // ground please
-        FillCube(BlockID.GRASS, blockX, blockY, blockZ, blockX + blockW - 1, blockY, blockZ + blockL - 1);
+        FillCube(BlockID.SAND, blockX, blockY, blockZ, blockX + blockW - 1, blockY, blockZ + blockL - 1);
 
         // pick a color
         var wallID = EncodeBlock(BlockID.CLOTH, rand.nextInt(16));
@@ -2110,7 +2116,7 @@ function AddFarmAndHousesLot() {
                     case 10: // reeds
                         if (nsOrient) {
                             if (z % 2 == 0) {
-                                blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.SAND;
                                 SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(BlockID.REED, 15));
                                 SetLateBlock(x + blockX, blockY + 2, z + blockZ, EncodeBlock(BlockID.REED, 15));
                                 if (OneInTwoChance()) {
@@ -2124,7 +2130,7 @@ function AddFarmAndHousesLot() {
                         }
                         else {
                             if (x % 2 == 0) {
-                                blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.SAND;
                                 SetLateBlock(x + blockX, blockY + 1, z + blockZ, EncodeBlock(BlockID.REED, 15));
                                 SetLateBlock(x + blockX, blockY + 2, z + blockZ, EncodeBlock(BlockID.REED, 15));
                                 if (OneInTwoChance()) {
@@ -2150,17 +2156,17 @@ function AddFarmAndHousesLot() {
                         }
                         break;
                     case 12: // roses
-                        blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                        blocks[x + blockX][blockY][z + blockZ] = BlockID.SAND;
                         SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.RED_FLOWER);
                         break;
                     case 13: // dandelion 
-                        blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                        blocks[x + blockX][blockY][z + blockZ] = BlockID.SAND;
                         SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.YELLOW_FLOWER);
                         break;
                     case 14: // random roses and dandelions
                         if (nsOrient) {
                             if (z % 2 == 0) {
-                                blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.SAND;
                                 if (OneInTwoChance())
                                     SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.RED_FLOWER)
                                 else
@@ -2170,7 +2176,7 @@ function AddFarmAndHousesLot() {
                         }
                         else {
                             if (x % 2 == 0) {
-                                blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                                blocks[x + blockX][blockY][z + blockZ] = BlockID.SAND;
                                 if (OneInTwoChance())
                                     SetLateBlock(x + blockX, blockY + 1, z + blockZ, BlockID.RED_FLOWER)
                                 else
@@ -2180,7 +2186,7 @@ function AddFarmAndHousesLot() {
                         }
                         break;
                     case 15: // trees
-                        blocks[x + blockX][blockY][z + blockZ] = BlockID.GRASS;
+                        blocks[x + blockX][blockY][z + blockZ] = BlockID.SAND;
                         if (x % 5 == 2 && z % 5 == 2)
                             SetLateTree(x + blockX, blockY, z + blockZ, false);
                         break;
@@ -2287,7 +2293,7 @@ function AddParkingLot() {
 
     // set up the default set of materials
     var lightID = BlockID.LIGHTSTONE;
-    var floorID = BlockID.STONE;
+    var floorID = BlockID.SANDSTONE;
     var ceilingID = BlockID.IRON_BLOCK;
     var paintID = ExtendedID.WHITE_CLOTH;
     var ramp1ID = ExtendedID.STONE_STEP;
@@ -2628,3 +2634,4 @@ function AddManholes() {
         blocks[locX + 3][locY - sewerHeight - streetHeight - 3][locZ + 2] = BlockID.AIR;
     }
 }
+

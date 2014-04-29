@@ -1,3 +1,5 @@
+// start file for LOG street layouts and themes
+// screenshot https://minecraftgods.com/?p=123
 // $Id$
 /***** FAB.JS v1.0
 * City block generator CraftScript for WorldEdit
@@ -16,6 +18,10 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
+* 
+* Street styles created by Shawn E Carter - http://ShawnsSpace.com / https://NewsByShawn.com / https://MinecraftGods.com
+* To contact for questions or comments follow me on Facebook at https://facebook.com/ShawnsSpace
+* Thank you!
 */
 
 importPackage(Packages.java.io);
@@ -860,27 +866,27 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
             }
 
     // cap it off
-    FillCellLayer(BlockID.SANDSTONE, blockX, blockZ, streetLevel, cellW, cellL);
+    FillCellLayer(BlockID.STONE_BRICK, blockX, blockZ, streetLevel, cellW, cellL);
 
     // add some grass
     FillCellLayer(BlockID.GRASS, blockX, blockZ, streetLevel + 1, cellW, cellL);
 
     // steps up to access point
-    blocks[blockX + 7][streetLevel - 6][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 6][streetLevel - 5][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 5][streetLevel - 4][blockZ + 1] = BlockID.SANDSTONE;
+    blocks[blockX + 7][streetLevel - 6][blockZ + 1] = BlockID.STONE_BRICK;
+    blocks[blockX + 6][streetLevel - 5][blockZ + 1] = BlockID.STONE_BRICK;
+    blocks[blockX + 5][streetLevel - 4][blockZ + 1] = BlockID.STONE_BRICK;
 
     // platform for access point
-    blocks[blockX + 4][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 3][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 2][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 1][streetLevel - 3][blockZ + 1] = BlockID.SANDSTONE;
+    blocks[blockX + 4][streetLevel - 3][blockZ + 1] = BlockID.STONE_BRICK;
+    blocks[blockX + 3][streetLevel - 3][blockZ + 1] = BlockID.STONE_BRICK;
+    blocks[blockX + 2][streetLevel - 3][blockZ + 1] = BlockID.STONE_BRICK;
+    blocks[blockX + 1][streetLevel - 3][blockZ + 1] = BlockID.STONE_BRICK;
 
     // backfill the wall behind the ladders
-    blocks[blockX + 2][streetLevel - 2][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 1][streetLevel - 2][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 2][streetLevel - 1][blockZ + 1] = BlockID.SANDSTONE;
-    blocks[blockX + 1][streetLevel - 1][blockZ + 1] = BlockID.SANDSTONE;
+    blocks[blockX + 2][streetLevel - 2][blockZ + 1] = BlockID.STONE_BRICK;
+    blocks[blockX + 1][streetLevel - 2][blockZ + 1] = BlockID.STONE_BRICK;
+    blocks[blockX + 2][streetLevel - 1][blockZ + 1] = BlockID.STONE_BRICK;
+    blocks[blockX + 1][streetLevel - 1][blockZ + 1] = BlockID.STONE_BRICK;
 
     // and now the ladders and trapdoor
     SetLateBlock(blockX + 3, streetLevel + 1, blockZ + 1, ExtendedID.SOUTHWARD_LADDER);
@@ -895,32 +901,32 @@ function DrawParkCell(blockX, blockZ, cellX, cellZ, cellW, cellL) {
 
         // simple columns
         if (x == fenceHole || x == cellWidth - fenceHole - 1) {
-            blocks[blockX + x][streetLevel + 2][blockZ] = BlockID.SAND;
-            blocks[blockX + x][streetLevel + 2][blockZ + cellLength - 1] = BlockID.SAND;
-            blocks[blockX + x][streetLevel + 3][blockZ] = BlockID.SANDSTONE;
-            blocks[blockX + x][streetLevel + 3][blockZ + cellLength - 1] = BlockID.SANDSTONE;
+            blocks[blockX + x][streetLevel + 2][blockZ] = BlockID.STONE_BRICK;
+            blocks[blockX + x][streetLevel + 2][blockZ + cellLength - 1] = BlockID.STONE_BRICK;
+            blocks[blockX + x][streetLevel + 3][blockZ] = BlockID.STONE_BRICK;
+            blocks[blockX + x][streetLevel + 3][blockZ + cellLength - 1] = BlockID.STONE_BRICK;
             blocks[blockX + x][streetLevel + 4][blockZ] = ExtendedID.SANDSTONE_STEP;
-            blocks[blockX + x][streetLevel + 4][blockZ + cellLength - 1] = ExtendedID.SANDSTONE_STEP;
+            blocks[blockX + x][streetLevel + 4][blockZ + cellLength - 1] = ExtendedID.WOODEN_STEP;
 
             // fence itself
         } else if (x > fenceHole && x < cellWidth - fenceHole) {
-            blocks[blockX + x][streetLevel + 2][blockZ] = BlockID.FENCE;
-            blocks[blockX + x][streetLevel + 2][blockZ + cellLength - 1] = BlockID.FENCE;
+            blocks[blockX + x][streetLevel + 2][blockZ] = BlockID.COBBLESTONE_WALL;
+            blocks[blockX + x][streetLevel + 2][blockZ + cellLength - 1] = BlockID.COBBLESTONE_WALL;
         }
     }
 
     // another fence along the other axis
     for (var z = 0; z < cellLength; z++) {
         if (z == fenceHole || z == cellLength - fenceHole - 1) {
-            blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.SAND;
-            blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.SAND;
-            blocks[blockX][streetLevel + 3][blockZ + z] = BlockID.SANDSTONE;
-            blocks[blockX + cellWidth - 1][streetLevel + 3][blockZ + z] = BlockID.SANDSTONE;
-            blocks[blockX][streetLevel + 4][blockZ + z] = ExtendedID.SANDSTONE_STEP;
-            blocks[blockX + cellWidth - 1][streetLevel + 4][blockZ + z] = ExtendedID.SANDSTONE_STEP;
+            blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.STONE_BRICK;
+            blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.STONE_BRICK;
+            blocks[blockX][streetLevel + 3][blockZ + z] = BlockID.STONE_BRICK;
+            blocks[blockX + cellWidth - 1][streetLevel + 3][blockZ + z] = BlockID.STONE_BRICK;
+            blocks[blockX][streetLevel + 4][blockZ + z] = ExtendedID.WOODEN_STEP;
+            blocks[blockX + cellWidth - 1][streetLevel + 4][blockZ + z] = ExtendedID.STEP;
         } else if (z > fenceHole && z < cellLength - fenceHole) {
-            blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.FENCE;
-            blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.FENCE;
+            blocks[blockX][streetLevel + 2][blockZ + z] = BlockID.COBBLESTONE_WALL;
+            blocks[blockX + cellWidth - 1][streetLevel + 2][blockZ + z] = BlockID.COBBLESTONE_WALL;
         }
     }
 
@@ -1041,7 +1047,7 @@ function AddCitySquares() {
         var floorID = BlockID.WOOD;
         var stairID = BlockID.WOODEN_STAIRS;
         if (OneInFourChance()) {
-            floorID = BlockID.COBBLESTONE;
+            floorID = BlockID.STONE_BRICK;
             stairID = BlockID.COBBLESTONE_STAIRS;
         }
 
@@ -1051,12 +1057,12 @@ function AddCitySquares() {
         var basementStairID = BlockID.WOODEN_STAIRS;
         var basementLandingID = BlockID.WOOD;
         if (OneInThreeChance()) {
-            basementFloorID = BlockID.COBBLESTONE;
+            basementFloorID = BlockID.STONE_BRICK;
             basementStairID = BlockID.COBBLESTONE_STAIRS;
-            basementLandingID = BlockID.COBBLESTONE;
+            basementLandingID = BlockID.STONE_BRICK;
         }
         if (OneInTwoChance())
-            basementWallID = BlockID.COBBLESTONE;
+            basementWallID = BlockID.STONE_BRICK;
 
         // pick primary/secondary colors
         var primaryID = rand.nextInt(8);
@@ -1288,7 +1294,7 @@ function AddCitySquares() {
             PunchStairs(stairID, stairsX, stairsZ, roofAt + floorHeight - 1, false, true, true);
 
             // now add some more fences
-            AddWalls(BlockID.FENCE, blockX + 1, roofAt + floorHeight, blockZ + 1,
+            AddWalls(BlockID.COBBLESTONE_WALL, blockX + 1, roofAt + floorHeight, blockZ + 1,
                                             blockX + cellWidth - 2, roofAt + floorHeight, blockZ + cellLength - 2);
 
             // add final stair railing
@@ -1450,7 +1456,7 @@ function AddCitySquares() {
                                       atX + 1, atY, atZ + 1);
 
                 // cap off the top for safety
-                AddWalls(BlockID.FENCE, atX - 1, streetLevel + 2, atZ - 2,
+                AddWalls(BlockID.COBBLESTONE_WALL, atX - 1, streetLevel + 2, atZ - 2,
                                         atX + 2, atY + 1, atZ + 2);
 
                 while (atY - stepNdx - 1 >= floorNth) {
@@ -1564,8 +1570,8 @@ function AddCitySquares() {
 
                 // make sure we don't fall down the stairs
                 if (addGuardrail) {
-                    blocks[airX][floorY + 1][atZ + 2] = BlockID.FENCE;
-                    blocks[airX][floorY + 1][atZ - 1] = BlockID.FENCE;
+                    blocks[airX][floorY + 1][atZ + 2] = BlockID.COBBLESTONE_WALL;
+                    blocks[airX][floorY + 1][atZ - 1] = BlockID.COBBLESTONE_WALL;
                 }
             }
 
@@ -1589,7 +1595,7 @@ function AddCitySquares() {
 
                 // three more to finish things up
                 for (var z = 0; z < 4; z++)
-                    blocks[atX - 2][floorAt][atZ + z - 2] = BlockID.FENCE;
+                    blocks[atX - 2][floorAt][atZ + z - 2] = BlockID.COBBLESTONE_WALL;
             }
         }
     }
@@ -1649,8 +1655,8 @@ function AddStreets() {
         }
 
         // add the street
-        FillCellLayer(BlockID.STONE, blockX, blockZ, streetLevel - 1, 1, 1);
-        FillCellLayer(BlockID.STONE, blockX, blockZ, streetLevel, 1, 1);
+        FillCellLayer(BlockID.STONE_BRICK, blockX, blockZ, streetLevel - 1, 1, 1);
+        FillCellLayer(BlockID.STONE_BRICK, blockX, blockZ, streetLevel, 1, 1);
 
         // add the sidewalk and streetlights
         var sidewalkY = streetLevel + 1;
@@ -1714,7 +1720,7 @@ function AddStreets() {
         function DrawBevelPart(atX, atZ, boxX, boxZ, northSouth) {
             atX = atX + boxX * cornerBlocks;
             atZ = atZ + boxZ * cornerBlocks;
-            var blockID = OneInTwoChance() ? BlockID.COBBLESTONE : BlockID.MOSSY_COBBLESTONE;
+            var blockID = OneInTwoChance() ? BlockID.STONE_BRICK : BlockID.MOSSY_COBBLESTONE;
             if (northSouth)
                 for (var x = 0; x < cornerBlocks; x++) {
                     blocks[atX + x][streetLevel - 2][atZ] = blockID;
@@ -1732,7 +1738,7 @@ function AddStreets() {
             var blockZ = atZ + boxZ * cornerBlocks;
 
             // first the walls
-            var wallID = OneInTwoChance() ? BlockID.COBBLESTONE : BlockID.MOSSY_COBBLESTONE;
+            var wallID = OneInTwoChance() ? BlockID.STONE_BRICK : BlockID.MOSSY_COBBLESTONE;
             AddWalls(wallID, blockX, sewerFloor, blockZ,
                              blockX + cornerBlocks - 1, sewerCeiling - 1, blockZ + cornerBlocks - 1);
 
@@ -1870,11 +1876,11 @@ function AddStreets() {
 }
 
 function DrawStreetlight(blockX, blockY, blockZ, lightN, lightE, lightS, lightW) {
-    blocks[blockX][blockY][blockZ] = BlockID.IRON_BLOCK;
-    blocks[blockX][blockY + 1][blockZ] = BlockID.FENCE;
-    blocks[blockX][blockY + 2][blockZ] = BlockID.FENCE;
-    blocks[blockX][blockY + 3][blockZ] = BlockID.FENCE;
-    blocks[blockX][blockY + 4][blockZ] = BlockID.FENCE;
+    blocks[blockX][blockY][blockZ] = BlockID.STONE_BRICK;
+    blocks[blockX][blockY + 1][blockZ] = BlockID.COBBLESTONE_WALL;
+    blocks[blockX][blockY + 2][blockZ] = BlockID.COBBLESTONE_WALL;
+    blocks[blockX][blockY + 3][blockZ] = BlockID.COBBLESTONE_WALL;
+    blocks[blockX][blockY + 4][blockZ] = BlockID.COBBLESTONE_WALL;
     blocks[blockX][blockY + 5][blockZ] = BlockID.STEP;
 
     if (lightN)
@@ -1904,8 +1910,8 @@ function AddFarmAndHousesLot() {
         blocks[squareBlocks + at][streetLevel + 1][squareBlocks + lotBlocks] = BlockID.GRASS;
         blocks[squareBlocks + lotBlocks][streetLevel + 1][squareBlocks + at] = BlockID.GRASS;
         if (at < lotBlocks - 2 || at > lotBlocks + 2) {
-            blocks[squareBlocks + at][streetLevel + 2][squareBlocks + lotBlocks] = BlockID.FENCE;
-            blocks[squareBlocks + lotBlocks][streetLevel + 2][squareBlocks + at] = BlockID.FENCE;
+            blocks[squareBlocks + at][streetLevel + 2][squareBlocks + lotBlocks] = BlockID.COBBLESTONE_WALL;
+            blocks[squareBlocks + lotBlocks][streetLevel + 2][squareBlocks + at] = BlockID.COBBLESTONE_WALL;
         }
     }
 
@@ -2287,7 +2293,7 @@ function AddParkingLot() {
 
     // set up the default set of materials
     var lightID = BlockID.LIGHTSTONE;
-    var floorID = BlockID.STONE;
+    var floorID = BlockID.STONE_BRICK;
     var ceilingID = BlockID.IRON_BLOCK;
     var paintID = ExtendedID.WHITE_CLOTH;
     var ramp1ID = ExtendedID.STONE_STEP;
@@ -2297,7 +2303,7 @@ function AddParkingLot() {
     switch (rand.nextInt(3)) {
         case 0:
             {
-                floorID = BlockID.SANDSTONE;
+                floorID = BlockID.STONE_BRICK;
                 ceilingID = ExtendedID.YELLOW_CLOTH;
                 paintID = ExtendedID.GRAY_CLOTH;
                 ramp1ID = ExtendedID.SANDSTONE_STEP;
@@ -2306,7 +2312,7 @@ function AddParkingLot() {
             }
         case 1:
             {
-                floorID = BlockID.COBBLESTONE;
+                floorID = BlockID.STONE_BRICK;
                 ceilingID = ExtendedID.WHITE_CLOTH;
                 paintID = ExtendedID.LIGHT_GRAY_CLOTH;
                 ramp1ID = ExtendedID.COBBLESTONE_STEP;
@@ -2320,7 +2326,7 @@ function AddParkingLot() {
     }
 
     // set up a different set of default materials
-    var fenceID = BlockID.IRON_BLOCK;
+    var fenceID = BlockID.STONE_BRICK;
     var verticalID = BlockID.STONE;
     var upperWallID = BlockID.AIR;
     var lowerWallID = BlockID.STONE;
@@ -2329,16 +2335,16 @@ function AddParkingLot() {
     switch (rand.nextInt(3)) {
         case 0:
             {
-                fenceID = BlockID.FENCE;
+                fenceID = BlockID.COBBLESTONE_WALL;
                 verticalID = BlockID.SANDSTONE;
                 lowerWallID = BlockID.SANDSTONE;
                 break;
             }
         case 1:
             {
-                fenceID = BlockID.IRON_BLOCK;
-                verticalID = BlockID.COBBLESTONE;
-                lowerWallID = BlockID.COBBLESTONE;
+                fenceID = BlockID.STONE_BRICK;
+                verticalID = BlockID.STONE_BRICK;
+                lowerWallID = BlockID.STONE_BRICK;
                 break;
             }
         default:
@@ -2354,7 +2360,7 @@ function AddParkingLot() {
         fenceID = ceilingID
     else if (OneInFourChance())
         fenceID = BlockID.GLASS;
-    if (OneInTwoChance() && fenceID != BlockID.FENCE)
+    if (OneInTwoChance() && fenceID != BlockID.COBBLESTONE_WALL)
         upperWallID = BlockID.GLASS;
 
     // how tall and is there a basement?
